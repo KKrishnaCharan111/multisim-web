@@ -1,7 +1,7 @@
 /**
- * Multisim Web - Main Application Controller
- * Handles schematic interactions, circuit file save/load, high-res image export,
- * SPICE netlist export, real-time MNA simulation, and instruments.
+ * Multisim Web Studio - Academic & Professional Circuit Lab Controller
+ * Handles schematic interactions, 360° component rotation, live probe oscilloscope plotting,
+ * direct double-click value editing with engineering notation, and high-res downloads.
  */
 
 import { MNACircuitSolver } from './engine/mna-solver.js';
@@ -9,7 +9,6 @@ import { SchematicRenderer } from './renderer/schematic-renderer.js';
 import { Oscilloscope } from './instruments/oscilloscope.js';
 import { DigitalMultimeter } from './instruments/multimeter.js';
 import { COMPONENT_CATEGORIES, COMPONENT_CATALOG } from './components/component-definitions.js';
-import { SAMPLE_CIRCUITS } from './examples/sample-circuits.js';
 
 class MultisimApp {
   constructor() {
@@ -21,7 +20,8 @@ class MultisimApp {
     this.oscilloscope = new Oscilloscope(this.scopeCanvas, this.solver);
     this.multimeter = new DigitalMultimeter(this.solver);
 
-    this.currentMode = 'select';
+    this.currentMode = 'select'; // 'select', 'wire', 'probe'
+    this.activeProbeChannel = 0; // 0 for CH A, 1 for CH B
     this.nextNetId = 1;
     this.isDraggingComp = false;
     this.dragStartPos = { x: 0, y: 0 };
@@ -38,11 +38,11 @@ class MultisimApp {
     this.initInstruments();
     this.resizeCanvas();
 
-    // Start with a clean, blank canvas
+    // Clean blank canvas on startup
     this.solver.setComponents([]);
     this.updateProbeDropdowns();
 
-    // Start simulation & render loop
+    // Simulation & render loop
     this.solver.isRunning = true;
     this.startSimulationLoop();
   }
@@ -54,24 +54,56 @@ class MultisimApp {
     this.renderer.render();
   }
 
+  // Parse engineering strings: e.g. "2.3k", "14k", "470", "28p", "10n", "0.47u", "2.2m"
+  parseEngValue(input) {
+    if (typeof input === 'number') return input;
+    if (!input || typeof input !== 'string') return 1000;
+    const clean = input.trim().replace(/Ω|ohm|F|H|V|A|Hz/gi, '').trim();
+    const match = clean.match(/^([+-]?\d*(?:\.\d+)?)\s*([a-zA-Zµ]?)$/);
+    if (!match) return parseFloat(clean) || 1000;
+    const num = parseFloat(match[1]);
+    const unit = match[2];
+    if (isNaN(num)) return 1000;
+
+    switch (unit) {
+      case 'p': case 'P': return num * 1e-12;
+      case 'n': case 'N': return num * 1e-9;
+      case 'u': case 'U': case 'µ': return num * 1e-6;
+      case 'm': return num * 1e-3;
+      case 'k': case 'K': return num * 1e3;
+      case 'M': return num * 1e6;
+      case 'G': return num * 1e9;
+      default: return num;
+    }
+  }
+
+  formatEngValue(val, unit = '') {
+    if (val === undefined || val === null || isNaN(val)) return '0 ' + unit;
+    const abs = Math.abs(val);
+    if (abs >= 1e6) return (val / 1e6).toFixed(2).replace(/\.00$/, '') + ' M' + unit;
+    if (abs >= 1e3) return (val / 1e3).toFixed(2).replace(/\.00$/, '') + ' k' + unit;
+    if (abs >= 1) return val.toFixed(2).replace(/\.00$/, '') + ' ' + unit;
+    if (abs >= 1e-3) return (val * 1e3).toFixed(2).replace(/\.00$/, '') + ' m' + unit;
+    if (abs >= 1e-6) return (val * 1e6).toFixed(2).replace(/\.00$/, '') + ' µ' + unit;
+    if (abs >= 1e-9) return (val * 1e9).toFixed(2).replace(/\.00$/, '') + ' n' + unit;
+    return (val * 1e12).toFixed(2).replace(/\.00$/, '') + ' p' + unit;
+  }
+
   initUI() {
     window.addEventListener('resize', () => this.resizeCanvas());
 
     this.renderCatalog();
 
-    // File Management
+    // 1. File operations
     const btnNew = document.getElementById('btnNew');
     const btnOpen = document.getElementById('btnOpen');
     const fileInput = document.getElementById('fileInput');
     const btnSave = document.getElementById('btnSave');
     const btnExportImage = document.getElementById('btnExportImage');
     const btnExportNetlist = document.getElementById('btnExportNetlist');
-    const btnTemplates = document.getElementById('btnTemplates');
-    const templatesModal = document.getElementById('templatesModal');
-    const modalCloseBtn = document.getElementById('modalCloseBtn');
 
     btnNew.addEventListener('click', () => {
-      if (this.solver.components.length === 0 || confirm('Create new blank circuit? Current unsaved work will be cleared.')) {
+      if (this.solver.components.length === 0 || confirm('Create a new blank circuit? Current schematic will be cleared.')) {
         this.solver.setComponents([]);
         this.renderer.selectedComponent = null;
         this.updateInspector(null);
@@ -80,9 +112,7 @@ class MultisimApp {
       }
     });
 
-    btnOpen.addEventListener('click', () => {
-      fileInput.click();
-    });
+    btnOpen.addEventListener('click', () => fileInput.click());
 
     fileInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
@@ -100,38 +130,18 @@ class MultisimApp {
             alert('Invalid circuit file format.');
           }
         } catch (err) {
-          alert('Error parsing circuit file: ' + err.message);
+          alert('Error opening circuit file: ' + err.message);
         }
       };
       reader.readAsText(file);
       fileInput.value = '';
     });
 
-    btnSave.addEventListener('click', () => {
-      this.downloadCircuitFile();
-    });
+    btnSave.addEventListener('click', () => this.downloadCircuitFile());
+    btnExportImage.addEventListener('click', () => this.renderer.exportAsImage());
+    btnExportNetlist.addEventListener('click', () => this.downloadSpiceNetlist());
 
-    btnExportImage.addEventListener('click', () => {
-      this.renderer.exportAsImage();
-    });
-
-    btnExportNetlist.addEventListener('click', () => {
-      this.downloadSpiceNetlist();
-    });
-
-    // Templates Modal
-    this.renderTemplatesModal();
-    btnTemplates.addEventListener('click', () => {
-      templatesModal.style.display = 'flex';
-    });
-    modalCloseBtn.addEventListener('click', () => {
-      templatesModal.style.display = 'none';
-    });
-    templatesModal.addEventListener('click', (e) => {
-      if (e.target === templatesModal) templatesModal.style.display = 'none';
-    });
-
-    // Simulation Buttons
+    // 2. Simulation buttons
     const btnRun = document.getElementById('btnRun');
     const btnPause = document.getElementById('btnPause');
     const btnStep = document.getElementById('btnStep');
@@ -161,14 +171,19 @@ class MultisimApp {
       this.renderer.render();
     });
 
-    // Editing Tools
+    // 3. Tools
     const toolSelect = document.getElementById('toolSelect');
     const toolWire = document.getElementById('toolWire');
+    const toolProbe = document.getElementById('toolProbe');
+    const btnRotate = document.getElementById('btnRotate');
+    const btnDelete = document.getElementById('btnDelete');
+    const btnClear = document.getElementById('btnClear');
 
     toolSelect.addEventListener('click', () => {
       this.currentMode = 'select';
       toolSelect.classList.add('active');
       toolWire.classList.remove('active');
+      toolProbe.classList.remove('active');
       this.renderer.isWiring = false;
       this.renderer.wireStartPin = null;
     });
@@ -177,12 +192,29 @@ class MultisimApp {
       this.currentMode = 'wire';
       toolWire.classList.add('active');
       toolSelect.classList.remove('active');
+      toolProbe.classList.remove('active');
     });
 
-    document.getElementById('btnRotate').addEventListener('click', () => this.rotateSelected());
-    document.getElementById('btnDelete').addEventListener('click', () => this.deleteSelected());
+    toolProbe.addEventListener('click', () => {
+      this.currentMode = 'probe';
+      toolProbe.classList.add('active');
+      toolSelect.classList.remove('active');
+      toolWire.classList.remove('active');
+    });
 
-    // Theme Toggle
+    btnRotate.addEventListener('click', () => this.rotateSelected());
+    btnDelete.addEventListener('click', () => this.deleteSelected());
+    btnClear.addEventListener('click', () => {
+      if (confirm('Clear entire canvas?')) {
+        this.solver.setComponents([]);
+        this.renderer.selectedComponent = null;
+        this.updateInspector(null);
+        this.updateProbeDropdowns();
+        this.renderer.render();
+      }
+    });
+
+    // 4. View & Theme
     const btnToggleTheme = document.getElementById('btnToggleTheme');
     const themeBtnText = document.getElementById('themeBtnText');
     btnToggleTheme.addEventListener('click', () => {
@@ -194,7 +226,6 @@ class MultisimApp {
       this.renderer.render();
     });
 
-    // Animated Current Flow Toggle
     const btnToggleCurrent = document.getElementById('btnToggleCurrent');
     btnToggleCurrent.addEventListener('click', () => {
       this.renderer.showCurrentFlow = !this.renderer.showCurrentFlow;
@@ -238,27 +269,9 @@ class MultisimApp {
       if (e.key === 'r' || e.key === 'R') this.rotateSelected();
       if (e.key === 'Delete' || e.key === 'Backspace') this.deleteSelected();
       if (e.key === 'w' || e.key === 'W') toolWire.click();
+      if (e.key === 'p' || e.key === 'P') toolProbe.click();
       if (e.key === 'Escape') toolSelect.click();
       if (e.key === 'F5') { e.preventDefault(); btnRun.click(); }
-    });
-  }
-
-  renderTemplatesModal() {
-    const list = document.getElementById('templatesList');
-    list.innerHTML = '';
-
-    SAMPLE_CIRCUITS.forEach(sample => {
-      const card = document.createElement('div');
-      card.className = 'template-card';
-      card.innerHTML = `
-        <div class="template-name">${sample.name}</div>
-        <div class="template-desc">${sample.description}</div>
-      `;
-      card.addEventListener('click', () => {
-        this.loadSampleCircuit(sample.id);
-        document.getElementById('templatesModal').style.display = 'none';
-      });
-      list.appendChild(card);
     });
   }
 
@@ -273,7 +286,7 @@ class MultisimApp {
   }
 
   downloadSpiceNetlist() {
-    let netlist = `* NI MULTISIM WEB SPICE NETLIST EXPORT\n* Generated: ${new Date().toISOString()}\n\n`;
+    let netlist = `* MULTISIM WEB STUDIO SPICE NETLIST EXPORT\n* Generated: ${new Date().toISOString()}\n\n`;
     this.solver.components.forEach((c, idx) => {
       const p1 = c.pins[0]?.netId || '0';
       const p2 = c.pins[1]?.netId || '0';
@@ -282,6 +295,7 @@ class MultisimApp {
           netlist += `R${idx + 1} ${p1} ${p2} ${c.resistance || 1000}\n`;
           break;
         case 'CAPACITOR':
+        case 'CAPACITOR_ELECTROLYTIC':
           netlist += `C${idx + 1} ${p1} ${p2} ${c.capacitance || 1e-6}\n`;
           break;
         case 'INDUCTOR':
@@ -363,6 +377,7 @@ class MultisimApp {
       category: def.category,
       x: wx,
       y: wy,
+      rotation: 0,
       width: def.width,
       height: def.height,
       pins: def.pins.map(p => ({ ...p, netId: null, voltage: 0 })),
@@ -380,20 +395,11 @@ class MultisimApp {
     this.renderer.render();
   }
 
+  // Full 360° rotation for ANY component
   rotateSelected() {
     const comp = this.renderer.selectedComponent;
     if (!comp) return;
-    const cx = comp.width / 2;
-    const cy = comp.height / 2;
-    for (const pin of comp.pins) {
-      const dx = pin.x - cx;
-      const dy = pin.y - cy;
-      pin.x = Math.round(cx - dy);
-      pin.y = Math.round(cy + dx);
-    }
-    const temp = comp.width;
-    comp.width = comp.height;
-    comp.height = temp;
+    comp.rotation = ((comp.rotation || 0) + 90) % 360;
     this.renderer.render();
   }
 
@@ -413,6 +419,18 @@ class MultisimApp {
   initCanvasEvents() {
     const canvas = this.canvas;
 
+    // Double-click on any component to quickly edit its value
+    canvas.addEventListener('dblclick', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const sx = e.clientX - rect.left;
+      const sy = e.clientY - rect.top;
+      const wpos = this.renderer.screenToWorld(sx, sy);
+      const comp = this.renderer.findComponentAt(wpos.x, wpos.y);
+      if (comp) {
+        this.promptEditValue(comp);
+      }
+    });
+
     canvas.addEventListener('mousedown', (e) => {
       const rect = canvas.getBoundingClientRect();
       const sx = e.clientX - rect.left;
@@ -423,6 +441,15 @@ class MultisimApp {
         this.isPanning = true;
         this.panStart = { x: sx - this.renderer.panX, y: sy - this.renderer.panY };
         return;
+      }
+
+      // Probe Tool action: click on any pin to attach oscilloscope probe
+      if (this.currentMode === 'probe') {
+        const pinInfo = this.renderer.findPinAt(wpos.x, wpos.y);
+        if (pinInfo) {
+          this.attachScopeProbe(pinInfo.comp, pinInfo.pIdx);
+          return;
+        }
       }
 
       const pinInfo = this.renderer.findPinAt(wpos.x, wpos.y);
@@ -448,16 +475,12 @@ class MultisimApp {
       if (comp) {
         if (comp.type === 'SWITCH_SPST' || comp.type === 'PUSH_BUTTON_NO' || comp.type === 'PUSH_BUTTON_NC') {
           comp.isOpen = !comp.isOpen;
-        } else if (comp.type === 'SWITCH_SPDT') {
-          comp.isPosA = !comp.isPosA;
         }
 
-        if ((comp.type === 'POTENTIOMETER' || comp.type === 'LDR' || comp.type === 'THERMISTOR_NTC') &&
-            wpos.y > comp.y + comp.height - 4) {
+        if (comp.type === 'POTENTIOMETER' || comp.type === 'LDR') {
           const frac = Math.max(0.01, Math.min(0.99, (wpos.x - comp.x) / comp.width));
           if (comp.type === 'POTENTIOMETER') comp.sliderValue = frac;
           if (comp.type === 'LDR') comp.lux = Math.round(frac * 1000);
-          if (comp.type === 'THERMISTOR_NTC') comp.temperature = Math.round(frac * 100 - 10);
         }
 
         this.renderer.selectedComponent = comp;
@@ -510,6 +533,64 @@ class MultisimApp {
     });
   }
 
+  // Prompt to edit value (supports 2.3k, 14k, 82k, 10u, 28p, etc.)
+  promptEditValue(comp) {
+    if (comp.resistance !== undefined) {
+      const valStr = prompt(`Enter Resistor value for ${comp.label || comp.partNumber} (e.g. 470, 1k, 1.1k, 2.3k, 14k, 82k, 100k, 470k):`, this.formatEngValue(comp.resistance, 'Ω'));
+      if (valStr) {
+        comp.resistance = this.parseEngValue(valStr);
+        comp.label = this.formatEngValue(comp.resistance, 'Ω');
+        this.updateInspector(comp);
+        this.renderer.render();
+      }
+    } else if (comp.capacitance !== undefined) {
+      const valStr = prompt(`Enter Capacitor value for ${comp.label || comp.partNumber} (e.g. 10p, 28p, 720p, 1n, 10n, 0.1u, 1u, 10u, 47u):`, this.formatEngValue(comp.capacitance, 'F'));
+      if (valStr) {
+        comp.capacitance = this.parseEngValue(valStr);
+        comp.label = this.formatEngValue(comp.capacitance, 'F');
+        this.updateInspector(comp);
+        this.renderer.render();
+      }
+    } else if (comp.inductance !== undefined) {
+      const valStr = prompt(`Enter Inductor value (e.g. 1m, 2.2m, 10m):`, this.formatEngValue(comp.inductance, 'H'));
+      if (valStr) {
+        comp.inductance = this.parseEngValue(valStr);
+        comp.label = this.formatEngValue(comp.inductance, 'H');
+        this.updateInspector(comp);
+        this.renderer.render();
+      }
+    } else if (comp.voltage !== undefined) {
+      const valStr = prompt(`Enter Voltage value for ${comp.label || comp.partNumber} (e.g. 5V, 9V, 12V):`, comp.voltage + ' V');
+      if (valStr) {
+        comp.voltage = parseFloat(valStr) || 5;
+        this.updateInspector(comp);
+        this.renderer.render();
+      }
+    }
+  }
+
+  // Probe Tool attachment directly onto Oscilloscope
+  attachScopeProbe(comp, pIdx) {
+    const ch = this.activeProbeChannel; // toggle between CH A (0) and CH B (1)
+    this.oscilloscope.setProbe(ch, comp.id, pIdx);
+    const pinName = comp.pins[pIdx]?.label || pIdx;
+    const probeStr = `${comp.label || comp.partNumber} [${pinName}]`;
+
+    if (ch === 0) {
+      const scopeSelectA = document.getElementById('scopeProbeChA');
+      if (scopeSelectA) scopeSelectA.value = `${comp.id}:${pIdx}`;
+      this.activeProbeChannel = 1; // next probe to CH B
+    } else {
+      const scopeSelectB = document.getElementById('scopeProbeChB');
+      if (scopeSelectB) scopeSelectB.value = `${comp.id}:${pIdx}`;
+      this.activeProbeChannel = 0; // next probe to CH A
+    }
+
+    // Switch right drawer to Oscilloscope graph tab
+    document.querySelector('.tab-btn[data-tab="oscilloscope"]')?.click();
+    this.renderer.render();
+  }
+
   connectPins(pinInfo1, pinInfo2) {
     if (!pinInfo1 || !pinInfo2) return;
     if (pinInfo1.comp.id === pinInfo2.comp.id && pinInfo1.pIdx === pinInfo2.pIdx) return;
@@ -541,7 +622,7 @@ class MultisimApp {
     if (!comp) {
       container.innerHTML = `
         <div style="color: var(--text-muted); font-size: 12px; text-align: center; margin-top: 40px;">
-          Select any component on the schematic canvas to inspect and edit its parameters.
+          Select or double-click any component on the schematic canvas to inspect and edit its value.
         </div>
       `;
       return;
@@ -551,28 +632,21 @@ class MultisimApp {
       <div style="font-weight: 700; font-size: 14px; margin-bottom: 8px; color: var(--accent-cyan);">${comp.name || comp.type}</div>
       <table class="inspector-table">
         <tr><td>Part Number</td><td><strong>${comp.partNumber || '-'}</strong></td></tr>
-        <tr><td>Type</td><td>${comp.type}</td></tr>
         <tr><td>Label</td><td><input type="text" class="inspector-input" id="propLabel" value="${comp.label || ''}"></td></tr>
+        <tr><td>Rotation</td><td><strong>${comp.rotation || 0}°</strong></td></tr>
     `;
 
     if (comp.resistance !== undefined) {
-      rows += `<tr><td>Resistance (Ω)</td><td><input type="number" class="inspector-input" id="propResistance" value="${comp.resistance}"></td></tr>`;
+      rows += `<tr><td>Resistance</td><td><input type="text" class="inspector-input" id="propResistance" value="${this.formatEngValue(comp.resistance, 'Ω')}"></td></tr>`;
     }
     if (comp.capacitance !== undefined) {
-      rows += `<tr><td>Capacitance (F)</td><td><input type="number" class="inspector-input" id="propCapacitance" step="1e-9" value="${comp.capacitance}"></td></tr>`;
+      rows += `<tr><td>Capacitance</td><td><input type="text" class="inspector-input" id="propCapacitance" value="${this.formatEngValue(comp.capacitance, 'F')}"></td></tr>`;
     }
     if (comp.inductance !== undefined) {
-      rows += `<tr><td>Inductance (H)</td><td><input type="number" class="inspector-input" id="propInductance" step="1e-3" value="${comp.inductance}"></td></tr>`;
+      rows += `<tr><td>Inductance</td><td><input type="text" class="inspector-input" id="propInductance" value="${this.formatEngValue(comp.inductance, 'H')}"></td></tr>`;
     }
     if (comp.voltage !== undefined) {
       rows += `<tr><td>Voltage (V)</td><td><input type="number" class="inspector-input" id="propVoltage" value="${comp.voltage}"></td></tr>`;
-    }
-    if (comp.frequency !== undefined) {
-      rows += `<tr><td>Frequency (Hz)</td><td><input type="number" class="inspector-input" id="propFrequency" value="${comp.frequency}"></td></tr>`;
-    }
-    if (comp.ratedCurrent !== undefined) {
-      rows += `<tr><td>Rated Current (A)</td><td><input type="number" class="inspector-input" id="propRatedCurrent" value="${comp.ratedCurrent}"></td></tr>`;
-      rows += `<tr><td>Blown State</td><td><button id="propResetFuse" class="ribbon-btn" style="padding: 2px 6px;">${comp.isBlown ? 'Blown (Reset)' : 'OK'}</button></td></tr>`;
     }
 
     rows += `
@@ -587,24 +661,30 @@ class MultisimApp {
     if (propLabel) propLabel.addEventListener('input', (e) => { comp.label = e.target.value; });
 
     const propR = document.getElementById('propResistance');
-    if (propR) propR.addEventListener('change', (e) => { comp.resistance = parseFloat(e.target.value) || 1000; });
+    if (propR) propR.addEventListener('change', (e) => {
+      comp.resistance = this.parseEngValue(e.target.value);
+      comp.label = this.formatEngValue(comp.resistance, 'Ω');
+      this.renderer.render();
+    });
 
     const propC = document.getElementById('propCapacitance');
-    if (propC) propC.addEventListener('change', (e) => { comp.capacitance = parseFloat(e.target.value) || 1e-6; });
+    if (propC) propC.addEventListener('change', (e) => {
+      comp.capacitance = this.parseEngValue(e.target.value);
+      comp.label = this.formatEngValue(comp.capacitance, 'F');
+      this.renderer.render();
+    });
+
+    const propL = document.getElementById('propInductance');
+    if (propL) propL.addEventListener('change', (e) => {
+      comp.inductance = this.parseEngValue(e.target.value);
+      comp.label = this.formatEngValue(comp.inductance, 'H');
+      this.renderer.render();
+    });
 
     const propV = document.getElementById('propVoltage');
-    if (propV) propV.addEventListener('change', (e) => { comp.voltage = parseFloat(e.target.value) || 5; });
-
-    const propF = document.getElementById('propFrequency');
-    if (propF) propF.addEventListener('change', (e) => { comp.frequency = parseFloat(e.target.value) || 1000; });
-
-    const propResetFuse = document.getElementById('propResetFuse');
-    if (propResetFuse) propResetFuse.addEventListener('click', () => {
-      comp.isBlown = false;
-      comp.smokeEffect = false;
-      comp.smokeInitialized = false;
-      comp.i2t = 0;
-      this.updateInspector(comp);
+    if (propV) propV.addEventListener('change', (e) => {
+      comp.voltage = parseFloat(e.target.value) || 5;
+      this.renderer.render();
     });
   }
 
@@ -682,37 +762,6 @@ class MultisimApp {
     document.getElementById('dmmRedProbe').addEventListener('change', (e) => {
       this.multimeter.redProbeNet = e.target.value || null;
     });
-  }
-
-  loadSampleCircuit(sampleId) {
-    const sample = SAMPLE_CIRCUITS.find(s => s.id === sampleId);
-    if (!sample) return;
-
-    const clonedComps = JSON.parse(JSON.stringify(sample.components));
-    this.solver.setComponents(clonedComps);
-    this.renderer.selectedComponent = null;
-
-    if (sample.oscilloscopeSetup) {
-      const os = sample.oscilloscopeSetup;
-      if (os.chA) {
-        this.oscilloscope.setProbe(0, os.chA.componentId, os.chA.pinIndex);
-        this.oscilloscope.channels[0].voltsPerDiv = os.chA.voltsPerDiv || 2.0;
-        document.getElementById('scopeVoltsChA').value = String(this.oscilloscope.channels[0].voltsPerDiv);
-      }
-      if (os.chB) {
-        this.oscilloscope.setProbe(1, os.chB.componentId, os.chB.pinIndex);
-        this.oscilloscope.channels[1].voltsPerDiv = os.chB.voltsPerDiv || 2.0;
-        document.getElementById('scopeVoltsChB').value = String(this.oscilloscope.channels[1].voltsPerDiv);
-      }
-      if (os.timePerDiv) {
-        this.oscilloscope.timePerDiv = os.timePerDiv;
-        document.getElementById('scopeTimebase').value = String(os.timePerDiv);
-      }
-    }
-
-    this.updateProbeDropdowns();
-    this.updateInspector(null);
-    this.renderer.render();
   }
 
   startSimulationLoop() {

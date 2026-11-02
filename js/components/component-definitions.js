@@ -1,57 +1,79 @@
 /**
- * Multisim Web - Comprehensive Component Catalog & Symbol Definitions
- * Fully covers all 11 categories in the Multisim specification document:
- * 1. Sources (Power, Signal, Controlled, 3-Phase, PWL, AM, FM, FSK)
- * 2. Basic (Passives, Potentiometers, Networks, Transformers, Switches, Relays, Connectors)
- * 3. Diodes (Rectifiers, Zeners, LEDs, Schottky, Thyristors, TRIAC, DIAC, Bridge, Varactors)
- * 4. Transistors (BJT NPN/PNP, Darlingtons, JFETs, MOSFETs, IGBTs)
- * 5. Analog (Op-Amps, Comparators, Inst Amps, Regulators 78xx/79xx/LM317, References, Multipliers)
- * 6. TTL 7400 Series (Gates, Flip-Flops, Counters, Decoders, Arithmetic ALUs)
- * 7. CMOS 4000 Series (Gates, Ripple Counters, 4017 Decade, Analog Switches, Latches)
- * 8. Mixed & Signal (555/556 Timers, ADC/DAC, PLL CD4046, VCO LM566, Multivibrators)
- * 9. Indicators (Voltmeters, Ammeters, Probes, Lamps, 7-Seg, Hex Decoded, Bargraph, LCD, Buzzer)
- * 10. Advanced & Sensors (Keypads 4x4, LDR, Thermistors NTC/PTC, Photodiodes, RF)
- * 11. Electro-Mechanical & Power (DC Motors, Stepper, Servo, Fuses, MOVs, PWM SG3525/TL494)
+ * Multisim Web Studio - Comprehensive Component Catalog & Symbol Registry
+ * Complete components for academic & professional electronic laboratory simulation.
  */
 
 export const COMPONENT_CATEGORIES = [
-  { id: 'sources', name: '1. Sources', icon: 'zap' },
-  { id: 'basic', name: '2. Basic Passives & Switches', icon: 'sliders' },
-  { id: 'diodes', name: '3. Diodes & Thyristors', icon: 'play' },
-  { id: 'transistors', name: '4. Transistors & FETs', icon: 'cpu' },
-  { id: 'analog', name: '5. Analog ICs & Regulators', icon: 'activity' },
-  { id: 'ttl', name: '6. TTL 7400 Series Logic', icon: 'hash' },
-  { id: 'cmos', name: '7. CMOS 4000 Series Logic', icon: 'grid' },
-  { id: 'mixed', name: '8. Mixed Signal & Timers', icon: 'clock' },
-  { id: 'indicators', name: '9. Indicators & Displays', icon: 'eye' },
-  { id: 'sensors', name: '10. Sensors, RF & Keypads', icon: 'sun' },
-  { id: 'electromech', name: '11. Electro-Mechanical & Power', icon: 'settings' }
+  { id: 'sources', name: '1. Sources & Power', icon: 'zap' },
+  { id: 'passives', name: '2. Passive Components (R, C, L)', icon: 'sliders' },
+  { id: 'potentiometers', name: '3. Potentiometers (Variable R)', icon: 'disc' },
+  { id: 'diodes', name: '4. Diodes & Rectifiers', icon: 'play' },
+  { id: 'transistors', name: '5. Transistors & FETs', icon: 'cpu' },
+  { id: 'opamps', name: '6. Operational Amplifiers (Op-Amps)', icon: 'activity' },
+  { id: 'ttl', name: '7. TTL 7400 Series Logic', icon: 'hash' },
+  { id: 'cmos', name: '8. CMOS 4000 Series Logic', icon: 'grid' },
+  { id: 'mixed', name: '9. Mixed Signal & Timers', icon: 'clock' },
+  { id: 'indicators', name: '10. Indicators & Optoelectronics', icon: 'eye' },
+  { id: 'sensors_electromech', name: '11. Sensors & Electro-Mechanical', icon: 'settings' }
+];
+
+export const STANDARD_RESISTOR_VALUES = [
+  { val: 470, label: '470 Ω' },
+  { val: 1000, label: '1 kΩ' },
+  { val: 1100, label: '1.1 kΩ' },
+  { val: 1500, label: '1.5 kΩ' },
+  { val: 2000, label: '2 kΩ' },
+  { val: 2300, label: '2.3 kΩ' },
+  { val: 3000, label: '3 kΩ' },
+  { val: 3300, label: '3.3 kΩ' },
+  { val: 3900, label: '3.9 kΩ' },
+  { val: 5000, label: '5 kΩ' },
+  { val: 6000, label: '6 kΩ' },
+  { val: 6800, label: '6.8 kΩ' },
+  { val: 10000, label: '10 kΩ' },
+  { val: 14000, label: '14 kΩ' },
+  { val: 15000, label: '15 kΩ' },
+  { val: 16000, label: '16 kΩ' },
+  { val: 18000, label: '18 kΩ' },
+  { val: 22000, label: '22 kΩ' },
+  { val: 82000, label: '82 kΩ' },
+  { val: 100000, label: '100 kΩ' },
+  { val: 470000, label: '470 kΩ' }
+];
+
+export const STANDARD_CAPACITOR_VALUES = [
+  { val: 10e-12, label: '10 pF', type: 'CAPACITOR' },
+  { val: 28e-12, label: '28 pF', type: 'CAPACITOR' },
+  { val: 720e-12, label: '720 pF', type: 'CAPACITOR' },
+  { val: 1e-9, label: '1000 pF (1 nF)', type: 'CAPACITOR' },
+  { val: 2.2e-9, label: '2200 pF (2.2 nF)', type: 'CAPACITOR' },
+  { val: 10e-9, label: '0.01 µF (10 nF)', type: 'CAPACITOR' },
+  { val: 0.1e-6, label: '0.1 µF', type: 'CAPACITOR' },
+  { val: 0.47e-6, label: '0.47 µF', type: 'CAPACITOR' },
+  { val: 1e-6, label: '1 µF', type: 'CAPACITOR' },
+  { val: 10e-6, label: '10 µF', type: 'CAPACITOR_ELECTROLYTIC' },
+  { val: 28e-6, label: '28 µF', type: 'CAPACITOR_ELECTROLYTIC' },
+  { val: 47e-6, label: '47 µF (Electrolytic)', type: 'CAPACITOR_ELECTROLYTIC' },
+  { val: 720e-6, label: '720 µF', type: 'CAPACITOR_ELECTROLYTIC' }
+];
+
+export const STANDARD_INDUCTOR_VALUES = [
+  { val: 1e-3, label: '1 mH' },
+  { val: 2.2e-3, label: '2.2 mH' }
 ];
 
 export const COMPONENT_CATALOG = [
-  // ================= 1. SOURCES =================
+  // ================= 1. SOURCES & POWER =================
   {
     type: 'GROUND',
     category: 'sources',
     name: 'Ground (0V Reference)',
     partNumber: 'GND',
     family: 'Power Sources',
-    description: 'Earth / Ground 0V reference node for circuit solver.',
+    description: 'Earth / 0V reference node for MNA circuit solver.',
     width: 32,
     height: 32,
     pins: [{ id: 'p0', x: 16, y: 0, label: 'GND', isGround: true }],
-    defaultProps: {}
-  },
-  {
-    type: 'DIGITAL_GROUND',
-    category: 'sources',
-    name: 'Digital Ground',
-    partNumber: 'DIGITAL_GND',
-    family: 'Power Sources',
-    description: 'Common return node for digital logic ICs.',
-    width: 32,
-    height: 32,
-    pins: [{ id: 'p0', x: 16, y: 0, label: 'DGND', isGround: true }],
     defaultProps: {}
   },
   {
@@ -77,18 +99,6 @@ export const COMPONENT_CATALOG = [
     height: 32,
     pins: [{ id: 'p0', x: 16, y: 32, label: '+12V' }],
     defaultProps: { voltage: 12.0 }
-  },
-  {
-    type: 'VSS',
-    category: 'sources',
-    name: 'VSS (0V / Substrate Rail)',
-    partNumber: 'VSS_0V',
-    family: 'Power Sources',
-    description: 'CMOS negative supply / substrate reference rail.',
-    width: 32,
-    height: 32,
-    pins: [{ id: 'p0', x: 16, y: 0, label: 'VSS' }],
-    defaultProps: { voltage: 0.0 }
   },
   {
     type: 'VEE',
@@ -130,7 +140,7 @@ export const COMPONENT_CATALOG = [
       { id: 'p0', x: 24, y: 0, label: '~' },
       { id: 'p1', x: 24, y: 48, label: '~' }
     ],
-    defaultProps: { voltage: 120.0, frequency: 60.0, phase: 0 }
+    defaultProps: { voltage: 12.0, frequency: 50.0, phase: 0 }
   },
   {
     type: 'THREE_PHASE_SOURCE',
@@ -138,31 +148,16 @@ export const COMPONENT_CATALOG = [
     name: '3-Phase AC Power Source',
     partNumber: '3PHASE_SRC',
     family: 'Power Sources',
-    description: '3-Phase balanced wye/delta source (Phase A, B, C at 120° offsets, Neutral).',
+    description: '3-Phase source (Phase A, B, C at 120° offsets, Neutral).',
     width: 64,
     height: 64,
     pins: [
-      { id: 'p0', x: 64, y: 12, label: 'Phase A (0°)' },
-      { id: 'p1', x: 64, y: 28, label: 'Phase B (-120°)' },
-      { id: 'p2', x: 64, y: 44, label: 'Phase C (+120°)' },
-      { id: 'p3', x: 0, y: 28, label: 'Neutral (N)' }
+      { id: 'p0', x: 64, y: 12, label: 'Phase A' },
+      { id: 'p1', x: 64, y: 28, label: 'Phase B' },
+      { id: 'p2', x: 64, y: 44, label: 'Phase C' },
+      { id: 'p3', x: 0, y: 28, label: 'N' }
     ],
     defaultProps: { voltage: 120.0, frequency: 50.0 }
-  },
-  {
-    type: 'DC_CURRENT_SOURCE',
-    category: 'sources',
-    name: 'DC Current Source',
-    partNumber: 'DC_CURRENT',
-    family: 'Signal Sources',
-    description: 'Constant independent direct current source.',
-    width: 48,
-    height: 48,
-    pins: [
-      { id: 'p0', x: 24, y: 0, label: 'In' },
-      { id: 'p1', x: 24, y: 48, label: 'Out' }
-    ],
-    defaultProps: { current: 0.01 }
   },
   {
     type: 'DIGITAL_CLOCK',
@@ -170,7 +165,7 @@ export const COMPONENT_CATALOG = [
     name: 'Clock Voltage (DIGITAL_CLOCK)',
     partNumber: 'DIGITAL_CLOCK',
     family: 'Signal Sources',
-    description: 'Digital logic square-wave clock source (0V/5V).',
+    description: 'Digital logic square-wave clock generator.',
     width: 48,
     height: 48,
     pins: [
@@ -180,72 +175,12 @@ export const COMPONENT_CATALOG = [
     defaultProps: { frequency: 1000.0, vHigh: 5.0, vLow: 0.0, dutyCycle: 0.5 }
   },
   {
-    type: 'PULSE_VOLTAGE',
-    category: 'sources',
-    name: 'Pulse Voltage Source',
-    partNumber: 'PULSE_GEN',
-    family: 'Signal Sources',
-    description: 'Configurable periodic rectangular pulse source.',
-    width: 48,
-    height: 48,
-    pins: [
-      { id: 'p0', x: 24, y: 0, label: '+' },
-      { id: 'p1', x: 24, y: 48, label: '-' }
-    ],
-    defaultProps: { frequency: 500.0, vHigh: 5.0, vLow: 0.0, pulseWidth: 0.0004 }
-  },
-  {
-    type: 'PWL_SOURCE',
-    category: 'sources',
-    name: 'Piecewise Linear Source (PWL)',
-    partNumber: 'PWL_SOURCE',
-    family: 'Signal Sources',
-    description: 'Arbitrary piecewise linear voltage curve simulator.',
-    width: 48,
-    height: 48,
-    pins: [
-      { id: 'p0', x: 24, y: 0, label: '+' },
-      { id: 'p1', x: 24, y: 48, label: '-' }
-    ],
-    defaultProps: { amplitude: 5.0, frequency: 100.0 }
-  },
-  {
-    type: 'AM_SOURCE',
-    category: 'sources',
-    name: 'AM Modulated Signal Source',
-    partNumber: 'AM_SOURCE',
-    family: 'Signal Sources',
-    description: 'Amplitude modulated RF carrier source.',
-    width: 48,
-    height: 48,
-    pins: [
-      { id: 'p0', x: 24, y: 0, label: '+' },
-      { id: 'p1', x: 24, y: 48, label: '-' }
-    ],
-    defaultProps: { carrierFreq: 10000.0, modFreq: 500.0, modIndex: 0.5, amplitude: 2.0 }
-  },
-  {
-    type: 'FM_SOURCE',
-    category: 'sources',
-    name: 'FM Modulated Signal Source',
-    partNumber: 'FM_SOURCE',
-    family: 'Signal Sources',
-    description: 'Frequency modulated RF source.',
-    width: 48,
-    height: 48,
-    pins: [
-      { id: 'p0', x: 24, y: 0, label: '+' },
-      { id: 'p1', x: 24, y: 48, label: '-' }
-    ],
-    defaultProps: { carrierFreq: 5000.0, modFreq: 200.0, freqDev: 1000.0, amplitude: 2.0 }
-  },
-  {
     type: 'SINE_GEN',
     category: 'sources',
-    name: 'Function / Sine Generator',
-    partNumber: 'SINE_SOURCE',
+    name: 'Sine / Function Generator',
+    partNumber: 'SINE_GEN',
     family: 'Signal Sources',
-    description: 'Pure sinusoidal analog test oscillator.',
+    description: 'Audio & RF precision sinusoidal function generator.',
     width: 48,
     height: 48,
     pins: [
@@ -254,79 +189,112 @@ export const COMPONENT_CATALOG = [
     ],
     defaultProps: { amplitude: 2.5, frequency: 1000.0, offset: 0 }
   },
-  {
-    type: 'VCVS',
-    category: 'sources',
-    name: 'VCVS (Voltage-Controlled Voltage Source)',
-    partNumber: 'VCVS',
-    family: 'Controlled Sources',
-    description: 'E-source: Vout = Gain * (Vctrl+ - Vctrl-).',
-    width: 56,
-    height: 56,
-    pins: [
-      { id: 'p0', x: 56, y: 16, label: 'Out+' },
-      { id: 'p1', x: 56, y: 40, label: 'Out-' },
-      { id: 'p2', x: 0, y: 16, label: 'In+' },
-      { id: 'p3', x: 0, y: 40, label: 'In-' }
-    ],
-    defaultProps: { gain: 2.0 }
-  },
-  {
-    type: 'VCCS',
-    category: 'sources',
-    name: 'VCCS (Voltage-Controlled Current Source)',
-    partNumber: 'VCCS',
-    family: 'Controlled Sources',
-    description: 'G-source: Iout = Gm * (Vctrl+ - Vctrl-).',
-    width: 56,
-    height: 56,
-    pins: [
-      { id: 'p0', x: 56, y: 16, label: 'Out+' },
-      { id: 'p1', x: 56, y: 40, label: 'Out-' },
-      { id: 'p2', x: 0, y: 16, label: 'In+' },
-      { id: 'p3', x: 0, y: 40, label: 'In-' }
-    ],
-    defaultProps: { gm: 0.05 }
-  },
 
-  // ================= 2. BASIC PASSIVES & SWITCHES =================
+  // ================= 2. PASSIVE COMPONENTS (R, C, L) =================
   {
     type: 'RESISTOR',
-    category: 'basic',
-    name: 'Resistor (RESISTOR)',
+    category: 'passives',
+    name: 'Resistor (Custom Value)',
     partNumber: 'RESISTOR',
-    family: 'Passives',
-    description: 'Linear carbon/metal film resistor with rated wattage.',
+    family: 'Resistors',
+    description: 'Linear resistor. Double-click on canvas to enter ANY value (e.g. 2.3k, 14k, 82k).',
     width: 56,
     height: 24,
     pins: [
       { id: 'p0', x: 0, y: 12, label: '1' },
       { id: 'p1', x: 56, y: 12, label: '2' }
     ],
-    defaultProps: { resistance: 1000, maxPower: 0.25, isRatedVirtual: false }
+    defaultProps: { resistance: 1000, label: 'R1' }
   },
+  // Populate all user-requested standard resistor entries
+  ...STANDARD_RESISTOR_VALUES.map((r, i) => ({
+    type: 'RESISTOR',
+    category: 'passives',
+    name: `Resistor ${r.label}`,
+    partNumber: `R_${r.label.replace(/\s+/g, '')}`,
+    family: 'Standard Resistors',
+    description: `Fixed ${r.label} film resistor. Fully adjustable.`,
+    width: 56,
+    height: 24,
+    pins: [
+      { id: 'p0', x: 0, y: 12, label: '1' },
+      { id: 'p1', x: 56, y: 12, label: '2' }
+    ],
+    defaultProps: { resistance: r.val, label: `R_${r.label}` }
+  })),
+
+  // Capacitors
   {
-    type: 'RESISTOR_VIRTUAL',
-    category: 'basic',
-    name: 'Resistor (Virtual)',
-    partNumber: 'RESISTOR_VIRTUAL',
-    family: 'Virtual Components',
-    description: 'Ideal virtual resistor with zero tolerance & unlimited power.',
-    width: 56,
-    height: 24,
+    type: 'CAPACITOR',
+    category: 'passives',
+    name: 'Capacitor (Custom Value)',
+    partNumber: 'CAPACITOR',
+    family: 'Capacitors',
+    description: 'Ceramic capacitor. Double-click on canvas to enter ANY value (e.g. 28pF, 10nF).',
+    width: 48,
+    height: 32,
     pins: [
-      { id: 'p0', x: 0, y: 12, label: '1' },
-      { id: 'p1', x: 56, y: 12, label: '2' }
+      { id: 'p0', x: 0, y: 16, label: '1' },
+      { id: 'p1', x: 48, y: 16, label: '2' }
     ],
-    defaultProps: { resistance: 1000 }
+    defaultProps: { capacitance: 1e-7, label: 'C1' }
   },
+  ...STANDARD_CAPACITOR_VALUES.map((c, i) => ({
+    type: c.type,
+    category: 'passives',
+    name: `Capacitor ${c.label}`,
+    partNumber: `C_${c.label.replace(/[^a-zA-Z0-9]/g, '')}`,
+    family: 'Standard Capacitors',
+    description: `Standard ${c.label} capacitor.`,
+    width: 48,
+    height: 32,
+    pins: [
+      { id: 'p0', x: 0, y: 16, label: c.type === 'CAPACITOR_ELECTROLYTIC' ? '+' : '1' },
+      { id: 'p1', x: 48, y: 16, label: c.type === 'CAPACITOR_ELECTROLYTIC' ? '-' : '2' }
+    ],
+    defaultProps: { capacitance: c.val, label: `C_${c.label}` }
+  })),
+
+  // Inductors
+  {
+    type: 'INDUCTOR',
+    category: 'passives',
+    name: 'Inductor (Custom Value)',
+    partNumber: 'INDUCTOR',
+    family: 'Inductors',
+    description: 'Coil inductor with energy storage companion model.',
+    width: 56,
+    height: 28,
+    pins: [
+      { id: 'p0', x: 0, y: 14, label: '1' },
+      { id: 'p1', x: 56, y: 14, label: '2' }
+    ],
+    defaultProps: { inductance: 1e-3, label: 'L1' }
+  },
+  ...STANDARD_INDUCTOR_VALUES.map((ind) => ({
+    type: 'INDUCTOR',
+    category: 'passives',
+    name: `Inductor ${ind.label}`,
+    partNumber: `L_${ind.label.replace(/\s+/g, '')}`,
+    family: 'Standard Inductors',
+    description: `Fixed ${ind.label} coil inductor.`,
+    width: 56,
+    height: 28,
+    pins: [
+      { id: 'p0', x: 0, y: 14, label: '1' },
+      { id: 'p1', x: 56, y: 14, label: '2' }
+    ],
+    defaultProps: { inductance: ind.val, label: `L_${ind.label}` }
+  })),
+
+  // ================= 3. POTENTIOMETERS =================
   {
     type: 'POTENTIOMETER',
-    category: 'basic',
-    name: 'Potentiometer (POTENTIOMETER)',
-    partNumber: 'POT_10K',
-    family: 'Adjustable Passives',
-    description: 'Variable 3-terminal resistor with interactive slider.',
+    category: 'potentiometers',
+    name: '1k Potentiometer (Variable Resistor)',
+    partNumber: 'POT_1K',
+    family: 'Potentiometers',
+    description: '1 kΩ 3-terminal variable resistor with draggable wiper slider.',
     width: 64,
     height: 40,
     pins: [
@@ -334,294 +302,56 @@ export const COMPONENT_CATALOG = [
       { id: 'p1', x: 32, y: 40, label: 'Wiper' },
       { id: 'p2', x: 64, y: 12, label: 'B' }
     ],
-    defaultProps: { resistance: 10000, sliderValue: 0.5 }
+    defaultProps: { resistance: 1000, sliderValue: 0.5, label: 'POT 1k' }
   },
   {
-    type: 'CAPACITOR',
-    category: 'basic',
-    name: 'Capacitor (Ceramic)',
-    partNumber: 'CAPACITOR',
-    family: 'Passives',
-    description: 'Non-polarized ceramic disc capacitor.',
-    width: 48,
-    height: 32,
-    pins: [
-      { id: 'p0', x: 0, y: 16, label: '1' },
-      { id: 'p1', x: 48, y: 16, label: '2' }
-    ],
-    defaultProps: { capacitance: 1e-7, maxVoltage: 50 }
-  },
-  {
-    type: 'CAPACITOR_ELECTROLYTIC',
-    category: 'basic',
-    name: 'Capacitor (Electrolytic Polarized)',
-    partNumber: 'CAP_ELECTRO',
-    family: 'Passives',
-    description: 'Polarized aluminum electrolytic filter capacitor.',
-    width: 48,
-    height: 32,
-    pins: [
-      { id: 'p0', x: 0, y: 16, label: '+' },
-      { id: 'p1', x: 48, y: 16, label: '-' }
-    ],
-    defaultProps: { capacitance: 47e-6, maxVoltage: 25, isRatedVirtual: true }
-  },
-  {
-    type: 'VARIABLE_CAPACITOR',
-    category: 'basic',
-    name: 'Variable Capacitor (Trimmer)',
-    partNumber: 'VAR_CAP',
-    family: 'Adjustable Passives',
-    description: 'RF tuning variable capacitor (10pF to 100pF).',
-    width: 48,
-    height: 32,
-    pins: [
-      { id: 'p0', x: 0, y: 16, label: '1' },
-      { id: 'p1', x: 48, y: 16, label: '2' }
-    ],
-    defaultProps: { capacitance: 50e-12, sliderValue: 0.5 }
-  },
-  {
-    type: 'INDUCTOR',
-    category: 'basic',
-    name: 'Inductor (INDUCTOR)',
-    partNumber: 'INDUCTOR',
-    family: 'Passives',
-    description: 'Coil inductor with reactive companion model.',
-    width: 56,
-    height: 28,
-    pins: [
-      { id: 'p0', x: 0, y: 14, label: '1' },
-      { id: 'p1', x: 56, y: 14, label: '2' }
-    ],
-    defaultProps: { inductance: 1e-3 }
-  },
-  {
-    type: 'VARIABLE_INDUCTOR',
-    category: 'basic',
-    name: 'Variable Inductor',
-    partNumber: 'VAR_IND',
-    family: 'Adjustable Passives',
-    description: 'Ferrite core tunable variable inductor.',
-    width: 56,
-    height: 28,
-    pins: [
-      { id: 'p0', x: 0, y: 14, label: '1' },
-      { id: 'p1', x: 56, y: 14, label: '2' }
-    ],
-    defaultProps: { inductance: 1e-3, sliderValue: 0.5 }
-  },
-  {
-    type: 'RESISTOR_PACK',
-    category: 'basic',
-    name: 'Resistor Pack (SIP Bussed 8-Resistor)',
-    partNumber: 'SIP_RES_PACK',
-    family: 'Passive Networks',
-    description: 'Common bus resistor network for pull-up/pull-down lines.',
-    width: 80,
-    height: 48,
-    pins: [
-      { id: 'p0', x: 0, y: 24, label: 'COM' },
-      { id: 'p1', x: 80, y: 8, label: 'R1' },
-      { id: 'p2', x: 80, y: 16, label: 'R2' },
-      { id: 'p3', x: 80, y: 24, label: 'R3' },
-      { id: 'p4', x: 80, y: 32, label: 'R4' },
-      { id: 'p5', x: 80, y: 40, label: 'R5' }
-    ],
-    defaultProps: { resistance: 4700 }
-  },
-  {
-    type: 'RC_NETWORK',
-    category: 'basic',
-    name: 'R-C Filter Network',
-    partNumber: 'RC_NETWORK',
-    family: 'Passive Networks',
-    description: 'Integrated passive low-pass/high-pass RC snubber network.',
+    type: 'POTENTIOMETER',
+    category: 'potentiometers',
+    name: '10k Potentiometer (Variable Resistor)',
+    partNumber: 'POT_10K',
+    family: 'Potentiometers',
+    description: '10 kΩ 3-terminal variable resistor with draggable wiper slider.',
     width: 64,
     height: 40,
     pins: [
-      { id: 'p0', x: 0, y: 20, label: 'IN' },
-      { id: 'p1', x: 64, y: 20, label: 'OUT' },
-      { id: 'p2', x: 32, y: 40, label: 'GND' }
+      { id: 'p0', x: 0, y: 12, label: 'A' },
+      { id: 'p1', x: 32, y: 40, label: 'Wiper' },
+      { id: 'p2', x: 64, y: 12, label: 'B' }
     ],
-    defaultProps: { resistance: 1000, capacitance: 1e-7 }
+    defaultProps: { resistance: 10000, sliderValue: 0.5, label: 'POT 10k' }
   },
   {
-    type: 'TRANSFORMER',
-    category: 'basic',
-    name: 'Linear Transformer (10:1 Step-down)',
-    partNumber: 'XFRM_10_TO_1',
-    family: 'Magnetic / Inductive',
-    description: 'Primary to secondary mutual inductive power transformer.',
+    type: 'POTENTIOMETER',
+    category: 'potentiometers',
+    name: '100k Potentiometer (Variable Resistor)',
+    partNumber: 'POT_100K',
+    family: 'Potentiometers',
+    description: '100 kΩ 3-terminal variable resistor with draggable wiper slider.',
     width: 64,
-    height: 56,
+    height: 40,
     pins: [
-      { id: 'p0', x: 0, y: 12, label: 'P1' },
-      { id: 'p1', x: 0, y: 44, label: 'P2' },
-      { id: 'p2', x: 64, y: 12, label: 'S1' },
-      { id: 'p3', x: 64, y: 44, label: 'S2' }
+      { id: 'p0', x: 0, y: 12, label: 'A' },
+      { id: 'p1', x: 32, y: 40, label: 'Wiper' },
+      { id: 'p2', x: 64, y: 12, label: 'B' }
     ],
-    defaultProps: { turnsRatio: 10.0 }
-  },
-  {
-    type: 'CENTER_TAP_TRANSFORMER',
-    category: 'basic',
-    name: 'Center-Tapped Transformer',
-    partNumber: 'XFRM_CT',
-    family: 'Magnetic / Inductive',
-    description: 'Step-down transformer with secondary center-tap for dual rails.',
-    width: 64,
-    height: 64,
-    pins: [
-      { id: 'p0', x: 0, y: 16, label: 'P1' },
-      { id: 'p1', x: 0, y: 48, label: 'P2' },
-      { id: 'p2', x: 64, y: 12, label: 'S1' },
-      { id: 'p3', x: 64, y: 32, label: 'CT' },
-      { id: 'p4', x: 64, y: 52, label: 'S2' }
-    ],
-    defaultProps: { turnsRatio: 10.0 }
-  },
-  {
-    type: 'SWITCH_SPST',
-    category: 'basic',
-    name: 'SPST Knife / Toggle Switch',
-    partNumber: 'SPST',
-    family: 'Switches & Relays',
-    description: 'Single-Pole Single-Throw switch (click on canvas to toggle).',
-    width: 48,
-    height: 32,
-    pins: [
-      { id: 'p0', x: 0, y: 16, label: '1' },
-      { id: 'p1', x: 48, y: 16, label: '2' }
-    ],
-    defaultProps: { isOpen: false }
-  },
-  {
-    type: 'SWITCH_SPDT',
-    category: 'basic',
-    name: 'SPDT Toggle Switch',
-    partNumber: 'SPDT',
-    family: 'Switches & Relays',
-    description: 'Single-Pole Double-Throw route selection switch.',
-    width: 56,
-    height: 48,
-    pins: [
-      { id: 'p0', x: 0, y: 24, label: 'COM' },
-      { id: 'p1', x: 56, y: 12, label: 'A' },
-      { id: 'p2', x: 56, y: 36, label: 'B' }
-    ],
-    defaultProps: { isPosA: true }
-  },
-  {
-    type: 'SWITCH_DPST',
-    category: 'basic',
-    name: 'DPST Dual Switch',
-    partNumber: 'DPST',
-    family: 'Switches & Relays',
-    description: 'Double-Pole Single-Throw simultaneous dual-line switch.',
-    width: 56,
-    height: 48,
-    pins: [
-      { id: 'p0', x: 0, y: 12, label: '1A' },
-      { id: 'p1', x: 56, y: 12, label: '1B' },
-      { id: 'p2', x: 0, y: 36, label: '2A' },
-      { id: 'p3', x: 56, y: 36, label: '2B' }
-    ],
-    defaultProps: { isOpen: false }
-  },
-  {
-    type: 'PUSH_BUTTON_NO',
-    category: 'basic',
-    name: 'Push Button (Normally Open)',
-    partNumber: 'PB_NO',
-    family: 'Switches & Relays',
-    description: 'Momentary contact tactile button (open at rest).',
-    width: 48,
-    height: 32,
-    pins: [
-      { id: 'p0', x: 0, y: 16, label: '1' },
-      { id: 'p1', x: 48, y: 16, label: '2' }
-    ],
-    defaultProps: { isOpen: true }
-  },
-  {
-    type: 'PUSH_BUTTON_NC',
-    category: 'basic',
-    name: 'Push Button (Normally Closed)',
-    partNumber: 'PB_NC',
-    family: 'Switches & Relays',
-    description: 'Momentary contact break button (closed at rest).',
-    width: 48,
-    height: 32,
-    pins: [
-      { id: 'p0', x: 0, y: 16, label: '1' },
-      { id: 'p1', x: 48, y: 16, label: '2' }
-    ],
-    defaultProps: { isOpen: false }
-  },
-  {
-    type: 'RELAY_SPDT',
-    category: 'basic',
-    name: 'Electromechanical Relay (SPDT)',
-    partNumber: 'RELAY_SPDT',
-    family: 'Switches & Relays',
-    description: 'Coil activated switch with isolated Common, NO, and NC contacts.',
-    width: 64,
-    height: 56,
-    pins: [
-      { id: 'p0', x: 0, y: 14, label: 'Coil+' },
-      { id: 'p1', x: 0, y: 42, label: 'Coil-' },
-      { id: 'p2', x: 64, y: 28, label: 'COM' },
-      { id: 'p3', x: 64, y: 12, label: 'NC' },
-      { id: 'p4', x: 64, y: 44, label: 'NO' }
-    ],
-    defaultProps: { pullInVoltage: 3.5, energized: false }
-  },
-  {
-    type: 'HEADER_CONN',
-    category: 'basic',
-    name: 'Connector Header (4-Pin)',
-    partNumber: 'HDR_4P',
-    family: 'Connectors',
-    description: 'Standard 0.1-inch pitch wiring header connector block.',
-    width: 32,
-    height: 64,
-    pins: [
-      { id: 'p0', x: 32, y: 8, label: 'Pin 1' },
-      { id: 'p1', x: 32, y: 24, label: 'Pin 2' },
-      { id: 'p2', x: 32, y: 40, label: 'Pin 3' },
-      { id: 'p3', x: 32, y: 56, label: 'Pin 4' }
-    ],
-    defaultProps: {}
-  },
-  {
-    type: 'TEST_POINT',
-    category: 'basic',
-    name: 'Test Point (TP)',
-    partNumber: 'TP',
-    family: 'Connectors',
-    description: 'Oscilloscope / Multimeter probe hook connection node.',
-    width: 24,
-    height: 24,
-    pins: [{ id: 'p0', x: 12, y: 12, label: 'TP' }],
-    defaultProps: {}
+    defaultProps: { resistance: 100000, sliderValue: 0.5, label: 'POT 100k' }
   },
 
-  // ================= 3. DIODES =================
+  // ================= 4. DIODES & RECTIFIERS =================
   {
     type: 'DIODE_1N4007',
     category: 'diodes',
-    name: '1N4007 Silicon Rectifier (1000V 1A)',
+    name: '1N4007 / 1N4007A Silicon Rectifier Diode',
     partNumber: '1N4007',
     family: 'Diodes',
-    description: 'Standard silicon 1A power rectifier diode.',
+    description: '1A 1000V Silicon power rectifier diode (exact requested part).',
     width: 48,
     height: 28,
     pins: [
       { id: 'p0', x: 0, y: 14, label: 'A' },
       { id: 'p1', x: 48, y: 14, label: 'K' }
     ],
-    defaultProps: { forwardVoltage: 0.7, maxCurrent: 1.0 }
+    defaultProps: { forwardVoltage: 0.7, maxCurrent: 1.0, label: '1N4007' }
   },
   {
     type: 'DIODE_1N4001',
@@ -629,44 +359,29 @@ export const COMPONENT_CATALOG = [
     name: '1N4001 Silicon Rectifier (50V 1A)',
     partNumber: '1N4001',
     family: 'Diodes',
-    description: 'Standard low-voltage power rectifier diode.',
+    description: '50V 1A power rectifier diode.',
     width: 48,
     height: 28,
     pins: [
       { id: 'p0', x: 0, y: 14, label: 'A' },
       { id: 'p1', x: 48, y: 14, label: 'K' }
     ],
-    defaultProps: { forwardVoltage: 0.7, maxCurrent: 1.0 }
-  },
-  {
-    type: 'DIODE_1N5408',
-    category: 'diodes',
-    name: '1N5408 Heavy-Duty Rectifier (1000V 3A)',
-    partNumber: '1N5408',
-    family: 'Diodes',
-    description: 'High-current 3 Amp power rectifier diode.',
-    width: 48,
-    height: 28,
-    pins: [
-      { id: 'p0', x: 0, y: 14, label: 'A' },
-      { id: 'p1', x: 48, y: 14, label: 'K' }
-    ],
-    defaultProps: { forwardVoltage: 0.7, maxCurrent: 3.0 }
+    defaultProps: { forwardVoltage: 0.7, label: '1N4001' }
   },
   {
     type: 'DIODE_1N4148',
     category: 'diodes',
-    name: '1N4148 High-Speed Switching Diode',
+    name: '1N4148 Fast Switching Diode',
     partNumber: '1N4148',
     family: 'Diodes',
-    description: 'Fast 4ns recovery small-signal silicon diode.',
+    description: 'High-speed 4ns recovery signal diode.',
     width: 48,
     height: 28,
     pins: [
       { id: 'p0', x: 0, y: 14, label: 'A' },
       { id: 'p1', x: 48, y: 14, label: 'K' }
     ],
-    defaultProps: { forwardVoltage: 0.7 }
+    defaultProps: { forwardVoltage: 0.7, label: '1N4148' }
   },
   {
     type: 'ZENER_1N4733A',
@@ -674,168 +389,14 @@ export const COMPONENT_CATALOG = [
     name: '1N4733A Zener Diode (5.1V 1W)',
     partNumber: '1N4733A',
     family: 'Zener Diodes',
-    description: '5.1V precision voltage regulation and clamping zener diode.',
+    description: '5.1V voltage regulator / clamp zener diode.',
     width: 48,
     height: 28,
     pins: [
       { id: 'p0', x: 0, y: 14, label: 'A' },
       { id: 'p1', x: 48, y: 14, label: 'K' }
     ],
-    defaultProps: { zenerVoltage: 5.1 }
-  },
-  {
-    type: 'ZENER_1N4742A',
-    category: 'diodes',
-    name: '1N4742A Zener Diode (12.0V 1W)',
-    partNumber: '1N4742A',
-    family: 'Zener Diodes',
-    description: '12.0V voltage reference and surge limiter.',
-    width: 48,
-    height: 28,
-    pins: [
-      { id: 'p0', x: 0, y: 14, label: 'A' },
-      { id: 'p1', x: 48, y: 14, label: 'K' }
-    ],
-    defaultProps: { zenerVoltage: 12.0 }
-  },
-  {
-    type: 'SCHOTTKY_1N5819',
-    category: 'diodes',
-    name: '1N5819 Schottky Barrier Diode (40V 1A)',
-    partNumber: '1N5819',
-    family: 'Schottky & Fast Recovery',
-    description: 'Ultra-low 0.35V forward voltage drop diode.',
-    width: 48,
-    height: 28,
-    pins: [
-      { id: 'p0', x: 0, y: 14, label: 'A' },
-      { id: 'p1', x: 48, y: 14, label: 'K' }
-    ],
-    defaultProps: { forwardVoltage: 0.35 }
-  },
-  {
-    type: 'LED_RED',
-    category: 'diodes',
-    name: 'LED (Red High-Efficiency)',
-    partNumber: 'LED_RED',
-    family: 'LEDs',
-    description: 'Red light emitting diode with animated glow bloom.',
-    width: 48,
-    height: 32,
-    pins: [
-      { id: 'p0', x: 0, y: 16, label: 'A' },
-      { id: 'p1', x: 48, y: 16, label: 'K' }
-    ],
-    defaultProps: { forwardVoltage: 1.8, color: '#ef4444', brightness: 0 }
-  },
-  {
-    type: 'LED_GREEN',
-    category: 'diodes',
-    name: 'LED (Emerald Green)',
-    partNumber: 'LED_GREEN',
-    family: 'LEDs',
-    description: 'Green light emitting diode with dynamic luminous flux.',
-    width: 48,
-    height: 32,
-    pins: [
-      { id: 'p0', x: 0, y: 16, label: 'A' },
-      { id: 'p1', x: 48, y: 16, label: 'K' }
-    ],
-    defaultProps: { forwardVoltage: 2.1, color: '#22c55e', brightness: 0 }
-  },
-  {
-    type: 'LED_BLUE',
-    category: 'diodes',
-    name: 'LED (Vibrant Blue)',
-    partNumber: 'LED_BLUE',
-    family: 'LEDs',
-    description: 'Superbright blue LED (3.2V forward drop).',
-    width: 48,
-    height: 32,
-    pins: [
-      { id: 'p0', x: 0, y: 16, label: 'A' },
-      { id: 'p1', x: 48, y: 16, label: 'K' }
-    ],
-    defaultProps: { forwardVoltage: 3.2, color: '#3b82f6', brightness: 0 }
-  },
-  {
-    type: 'LED_YELLOW',
-    category: 'diodes',
-    name: 'LED (Bright Amber / Yellow)',
-    partNumber: 'LED_YELLOW',
-    family: 'LEDs',
-    description: 'Amber yellow indicator LED.',
-    width: 48,
-    height: 32,
-    pins: [
-      { id: 'p0', x: 0, y: 16, label: 'A' },
-      { id: 'p1', x: 48, y: 16, label: 'K' }
-    ],
-    defaultProps: { forwardVoltage: 2.0, color: '#eab308', brightness: 0 }
-  },
-  {
-    type: 'LED_RGB',
-    category: 'diodes',
-    name: 'RGB Full-Color LED (Common Cathode)',
-    partNumber: 'LED_RGB_CC',
-    family: 'LEDs',
-    description: 'Multi-color 4-terminal LED combining Red, Green, and Blue dice.',
-    width: 56,
-    height: 48,
-    pins: [
-      { id: 'p0', x: 0, y: 10, label: 'R' },
-      { id: 'p1', x: 0, y: 22, label: 'G' },
-      { id: 'p2', x: 0, y: 34, label: 'B' },
-      { id: 'p3', x: 56, y: 22, label: 'COM (K)' }
-    ],
-    defaultProps: {}
-  },
-  {
-    type: 'SCR_2N5060',
-    category: 'diodes',
-    name: 'SCR (2N5060 Silicon Controlled Rectifier)',
-    partNumber: '2N5060',
-    family: 'Thyristors & Power Diodes',
-    description: 'Gate triggered latching thyristor for power switching.',
-    width: 48,
-    height: 36,
-    pins: [
-      { id: 'p0', x: 0, y: 18, label: 'A' },
-      { id: 'p1', x: 48, y: 18, label: 'K' },
-      { id: 'p2', x: 24, y: 36, label: 'G' }
-    ],
-    defaultProps: { isLatched: false }
-  },
-  {
-    type: 'TRIAC_BT136',
-    category: 'diodes',
-    name: 'TRIAC (BT136 Bidirectional Thyristor)',
-    partNumber: 'BT136',
-    family: 'Thyristors & Power Diodes',
-    description: 'Bidirectional AC mains power control switch.',
-    width: 52,
-    height: 40,
-    pins: [
-      { id: 'p0', x: 0, y: 20, label: 'MT1' },
-      { id: 'p1', x: 52, y: 20, label: 'MT2' },
-      { id: 'p2', x: 26, y: 40, label: 'G' }
-    ],
-    defaultProps: {}
-  },
-  {
-    type: 'DIAC',
-    category: 'diodes',
-    name: 'DIAC (DB3 Bidirectional Trigger Diode)',
-    partNumber: 'DB3',
-    family: 'Thyristors & Power Diodes',
-    description: 'Symmetrical 32V breakdown trigger for TRIACs.',
-    width: 48,
-    height: 28,
-    pins: [
-      { id: 'p0', x: 0, y: 14, label: '1' },
-      { id: 'p1', x: 48, y: 14, label: '2' }
-    ],
-    defaultProps: { vBreakover: 32.0 }
+    defaultProps: { zenerVoltage: 5.1, label: '5.1V Zener' }
   },
   {
     type: 'BRIDGE_RECTIFIER',
@@ -843,7 +404,7 @@ export const COMPONENT_CATALOG = [
     name: 'Bridge Rectifier (KBP307 4-Pin Package)',
     partNumber: 'KBP307',
     family: 'Bridge Rectifiers',
-    description: 'Monolithic 4-diode full-wave bridge rectifier package.',
+    description: 'Full-wave monolithic bridge rectifier.',
     width: 56,
     height: 56,
     pins: [
@@ -855,14 +416,14 @@ export const COMPONENT_CATALOG = [
     defaultProps: {}
   },
 
-  // ================= 4. TRANSISTORS =================
+  // ================= 5. TRANSISTORS & FETS =================
   {
-    type: 'BJT_NPN_2N2222',
+    type: 'BJT_NPN_BC107',
     category: 'transistors',
-    name: '2N2222 NPN BJT Transistor',
-    partNumber: '2N2222',
+    name: 'BC107 Low-Noise Audio NPN BJT',
+    partNumber: 'BC107',
     family: 'BJT (NPN)',
-    description: 'High-speed NPN general purpose amplifier and switch.',
+    description: 'Metal-can TO-18 low-noise audio pre-amp transistor (Beta ~180).',
     width: 48,
     height: 48,
     pins: [
@@ -870,15 +431,15 @@ export const COMPONENT_CATALOG = [
       { id: 'p1', x: 0, y: 24, label: 'B' },
       { id: 'p2', x: 36, y: 48, label: 'E' }
     ],
-    defaultProps: { beta: 180 }
+    defaultProps: { beta: 180, label: 'BC107' }
   },
   {
-    type: 'BJT_NPN_2N3904',
+    type: 'BJT_NPN_BC147',
     category: 'transistors',
-    name: '2N3904 General NPN BJT',
-    partNumber: '2N3904',
+    name: 'BC147 Small Signal NPN BJT',
+    partNumber: 'BC147',
     family: 'BJT (NPN)',
-    description: 'Standard 40V 200mA NPN amplifier transistor.',
+    description: 'General purpose small-signal amplifier NPN transistor (Beta ~200).',
     width: 48,
     height: 48,
     pins: [
@@ -886,15 +447,15 @@ export const COMPONENT_CATALOG = [
       { id: 'p1', x: 0, y: 24, label: 'B' },
       { id: 'p2', x: 36, y: 48, label: 'E' }
     ],
-    defaultProps: { beta: 200 }
+    defaultProps: { beta: 200, label: 'BC147' }
   },
   {
     type: 'BJT_NPN_BC547',
     category: 'transistors',
-    name: 'BC547 Low-Noise Audio NPN BJT',
+    name: 'BC547 General Purpose NPN BJT',
     partNumber: 'BC547',
     family: 'BJT (NPN)',
-    description: 'Low-noise audio preamplifier and signal transistor.',
+    description: 'Industry-standard 45V 100mA NPN amplifier transistor (Beta ~250).',
     width: 48,
     height: 48,
     pins: [
@@ -902,15 +463,15 @@ export const COMPONENT_CATALOG = [
       { id: 'p1', x: 0, y: 24, label: 'B' },
       { id: 'p2', x: 36, y: 48, label: 'E' }
     ],
-    defaultProps: { beta: 250 }
+    defaultProps: { beta: 250, label: 'BC547' }
   },
   {
-    type: 'BJT_NPN_TIP31',
+    type: 'BJT_NPN_BF194',
     category: 'transistors',
-    name: 'TIP31 Power NPN BJT (40V 3A)',
-    partNumber: 'TIP31',
+    name: 'BF194 / BF494 RF / IF Amplifier NPN BJT',
+    partNumber: 'BF194',
     family: 'BJT (NPN)',
-    description: 'Medium power NPN audio and linear amplifier transistor.',
+    description: 'High-frequency VHF/IF amplifier and oscillator transistor (260MHz).',
     width: 48,
     height: 48,
     pins: [
@@ -918,12 +479,28 @@ export const COMPONENT_CATALOG = [
       { id: 'p1', x: 0, y: 24, label: 'B' },
       { id: 'p2', x: 36, y: 48, label: 'E' }
     ],
-    defaultProps: { beta: 50 }
+    defaultProps: { beta: 120, label: 'BF194' }
+  },
+  {
+    type: 'BJT_NPN_2N2222',
+    category: 'transistors',
+    name: '2N2222 High-Speed NPN BJT',
+    partNumber: '2N2222',
+    family: 'BJT (NPN)',
+    description: 'High-speed switching and audio amplifier transistor.',
+    width: 48,
+    height: 48,
+    pins: [
+      { id: 'p0', x: 36, y: 0, label: 'C' },
+      { id: 'p1', x: 0, y: 24, label: 'B' },
+      { id: 'p2', x: 36, y: 48, label: 'E' }
+    ],
+    defaultProps: { beta: 180, label: '2N2222' }
   },
   {
     type: 'BJT_PNP_2N2907',
     category: 'transistors',
-    name: '2N2907 PNP BJT Transistor',
+    name: '2N2907 PNP Transistor',
     partNumber: '2N2907',
     family: 'BJT (PNP)',
     description: 'Complementary high-speed PNP switching transistor.',
@@ -934,47 +511,15 @@ export const COMPONENT_CATALOG = [
       { id: 'p1', x: 0, y: 24, label: 'B' },
       { id: 'p2', x: 36, y: 0, label: 'E' }
     ],
-    defaultProps: { beta: 150 }
+    defaultProps: { beta: 150, label: '2N2907' }
   },
   {
-    type: 'BJT_PNP_BC557',
+    type: 'JFET_N_BFW11',
     category: 'transistors',
-    name: 'BC557 Low-Noise PNP BJT',
-    partNumber: 'BC557',
-    family: 'BJT (PNP)',
-    description: 'General purpose low-noise complementary PNP transistor.',
-    width: 48,
-    height: 48,
-    pins: [
-      { id: 'p0', x: 36, y: 48, label: 'C' },
-      { id: 'p1', x: 0, y: 24, label: 'B' },
-      { id: 'p2', x: 36, y: 0, label: 'E' }
-    ],
-    defaultProps: { beta: 220 }
-  },
-  {
-    type: 'DARLINGTON_TIP120',
-    category: 'transistors',
-    name: 'TIP120 NPN Darlington Pair (Gain ~1000)',
-    partNumber: 'TIP120',
-    family: 'Darlington Pairs',
-    description: 'High-gain monolithic Darlington power transistor for heavy loads.',
-    width: 52,
-    height: 52,
-    pins: [
-      { id: 'p0', x: 40, y: 0, label: 'C' },
-      { id: 'p1', x: 0, y: 26, label: 'B' },
-      { id: 'p2', x: 40, y: 52, label: 'E' }
-    ],
-    defaultProps: { beta: 1000 }
-  },
-  {
-    type: 'JFET_N_2N5457',
-    category: 'transistors',
-    name: '2N5457 N-Channel JFET',
-    partNumber: '2N5457',
+    name: 'BFW11 N-Channel JFET',
+    partNumber: 'BFW11',
     family: 'JFETs',
-    description: 'Depletion mode N-channel audio pre-amp JFET with high input Z.',
+    description: 'Low-noise RF and audio amplifier N-channel JFET (Vp ~ -2.5V, Idss ~ 7mA).',
     width: 50,
     height: 50,
     pins: [
@@ -982,7 +527,7 @@ export const COMPONENT_CATALOG = [
       { id: 'p1', x: 0, y: 25, label: 'G' },
       { id: 'p2', x: 38, y: 50, label: 'S' }
     ],
-    defaultProps: { vPinchOff: -2.0, idss: 0.003 }
+    defaultProps: { vPinchOff: -2.5, idss: 0.007, label: 'BFW11' }
   },
   {
     type: 'MOSFET_N_IRF540',
@@ -998,65 +543,17 @@ export const COMPONENT_CATALOG = [
       { id: 'p1', x: 0, y: 36, label: 'G' },
       { id: 'p2', x: 40, y: 52, label: 'S' }
     ],
-    defaultProps: { vth: 3.2, k: 0.8 }
-  },
-  {
-    type: 'MOSFET_2N7000',
-    category: 'transistors',
-    name: '2N7000 Small-Signal N-MOSFET',
-    partNumber: '2N7000',
-    family: 'MOSFETs',
-    description: 'Low-threshold N-channel enhancement mode signal MOSFET.',
-    width: 52,
-    height: 52,
-    pins: [
-      { id: 'p0', x: 40, y: 0, label: 'D' },
-      { id: 'p1', x: 0, y: 36, label: 'G' },
-      { id: 'p2', x: 40, y: 52, label: 'S' }
-    ],
-    defaultProps: { vth: 2.1, k: 0.3 }
-  },
-  {
-    type: 'MOSFET_P_IRF9540',
-    category: 'transistors',
-    name: 'IRF9540 P-Channel Power MOSFET',
-    partNumber: 'IRF9540',
-    family: 'MOSFETs',
-    description: 'High-side P-channel power switching MOSFET.',
-    width: 52,
-    height: 52,
-    pins: [
-      { id: 'p0', x: 40, y: 52, label: 'D' },
-      { id: 'p1', x: 0, y: 16, label: 'G' },
-      { id: 'p2', x: 40, y: 0, label: 'S' }
-    ],
-    defaultProps: { vth: -3.0, k: 0.7 }
-  },
-  {
-    type: 'IGBT_IRG4BC20',
-    category: 'transistors',
-    name: 'IRG4BC20 High-Voltage IGBT',
-    partNumber: 'IRG4BC20',
-    family: 'IGBTs',
-    description: 'Insulated Gate Bipolar Transistor (600V 16A) for motor drives.',
-    width: 52,
-    height: 52,
-    pins: [
-      { id: 'p0', x: 40, y: 0, label: 'C' },
-      { id: 'p1', x: 0, y: 26, label: 'G' },
-      { id: 'p2', x: 40, y: 52, label: 'E' }
-    ],
-    defaultProps: { vth: 4.0 }
+    defaultProps: { vth: 3.2, k: 0.8, label: 'IRF540' }
   },
 
-  // ================= 5. ANALOG =================
+  // ================= 6. OPERATIONAL AMPLIFIERS (OP-AMPS) =================
   {
     type: 'OPAMP_741',
-    category: 'analog',
-    name: 'uA741 Operational Amplifier (5-Pin)',
-    partNumber: 'uA741CN',
+    category: 'opamps',
+    name: 'IC 741 / LM741 Operational Amplifier (5-Pin)',
+    partNumber: 'LM741',
     family: 'Operational Amplifiers',
-    description: 'Internally compensated general-purpose operational amplifier.',
+    description: 'Internally compensated general-purpose op-amp (exact requested IC).',
     width: 64,
     height: 56,
     pins: [
@@ -1066,11 +563,29 @@ export const COMPONENT_CATALOG = [
       { id: 'p3', x: 32, y: 0, label: 'V+' },
       { id: 'p4', x: 32, y: 56, label: 'V-' }
     ],
-    defaultProps: {}
+    defaultProps: { label: 'LM741' }
+  },
+  {
+    type: 'OPAMP_LM358',
+    category: 'opamps',
+    name: 'LM358 Dual Low-Power Operational Amplifier',
+    partNumber: 'LM358',
+    family: 'Operational Amplifiers',
+    description: 'Industry-standard dual single-supply op-amp (exact requested IC).',
+    width: 64,
+    height: 56,
+    pins: [
+      { id: 'p0', x: 0, y: 16, label: 'IN+' },
+      { id: 'p1', x: 0, y: 40, label: 'IN-' },
+      { id: 'p2', x: 64, y: 28, label: 'OUT' },
+      { id: 'p3', x: 32, y: 0, label: 'V+' },
+      { id: 'p4', x: 32, y: 56, label: 'GND/V-' }
+    ],
+    defaultProps: { label: 'LM358' }
   },
   {
     type: 'OPAMP_3T_VIRTUAL',
-    category: 'analog',
+    category: 'opamps',
     name: 'Op-Amp (3-Terminal Virtual)',
     partNumber: 'OPAMP_3T_VIRTUAL',
     family: 'Operational Amplifiers',
@@ -1082,149 +597,17 @@ export const COMPONENT_CATALOG = [
       { id: 'p1', x: 0, y: 34, label: '-' },
       { id: 'p2', x: 64, y: 24, label: 'OUT' }
     ],
-    defaultProps: {}
-  },
-  {
-    type: 'OPAMP_NE5532',
-    category: 'analog',
-    name: 'NE5532 Ultra Low-Noise Audio Op-Amp',
-    partNumber: 'NE5532',
-    family: 'Operational Amplifiers',
-    description: 'High-performance audio dual op-amp (10MHz bandwidth, 9V/µs).',
-    width: 64,
-    height: 56,
-    pins: [
-      { id: 'p0', x: 0, y: 16, label: 'IN+' },
-      { id: 'p1', x: 0, y: 40, label: 'IN-' },
-      { id: 'p2', x: 64, y: 28, label: 'OUT' },
-      { id: 'p3', x: 32, y: 0, label: 'V+' },
-      { id: 'p4', x: 32, y: 56, label: 'V-' }
-    ],
-    defaultProps: {}
-  },
-  {
-    type: 'COMPARATOR_LM393',
-    category: 'analog',
-    name: 'LM393 Dual Precision Voltage Comparator',
-    partNumber: 'LM393',
-    family: 'Comparators',
-    description: 'Open-collector output voltage comparator.',
-    width: 64,
-    height: 48,
-    pins: [
-      { id: 'p0', x: 0, y: 14, label: '+' },
-      { id: 'p1', x: 0, y: 34, label: '-' },
-      { id: 'p2', x: 64, y: 24, label: 'OUT' }
-    ],
-    defaultProps: {}
-  },
-  {
-    type: 'COMPARATOR_LM311',
-    category: 'analog',
-    name: 'LM311 High-Speed Voltage Comparator',
-    partNumber: 'LM311',
-    family: 'Comparators',
-    description: 'Fast 200ns comparator with strobe input and ground-referenced output.',
-    width: 64,
-    height: 48,
-    pins: [
-      { id: 'p0', x: 0, y: 14, label: '+' },
-      { id: 'p1', x: 0, y: 34, label: '-' },
-      { id: 'p2', x: 64, y: 24, label: 'OUT' }
-    ],
-    defaultProps: {}
-  },
-  {
-    type: 'INST_AMP_AD620',
-    category: 'analog',
-    name: 'AD620 Instrumentation Amplifier',
-    partNumber: 'AD620',
-    family: 'Instrumentation Amplifiers',
-    description: 'Low-cost precision instrumentation amplifier with RG gain pin.',
-    width: 64,
-    height: 56,
-    pins: [
-      { id: 'p0', x: 0, y: 16, label: 'IN+' },
-      { id: 'p1', x: 0, y: 40, label: 'IN-' },
-      { id: 'p2', x: 64, y: 28, label: 'OUT' },
-      { id: 'p3', x: 32, y: 0, label: 'RG1' },
-      { id: 'p4', x: 32, y: 56, label: 'RG2' }
-    ],
-    defaultProps: { gain: 10 }
-  },
-  {
-    type: 'VOLTAGE_REG_7805',
-    category: 'analog',
-    name: 'LM7805 (+5V Linear Regulator)',
-    partNumber: 'LM7805',
-    family: 'Voltage Regulators',
-    description: 'Standard 3-terminal fixed +5V positive voltage regulator.',
-    width: 64,
-    height: 48,
-    pins: [
-      { id: 'p0', x: 0, y: 16, label: 'VIN' },
-      { id: 'p1', x: 32, y: 48, label: 'GND' },
-      { id: 'p2', x: 64, y: 16, label: 'VOUT' }
-    ],
-    defaultProps: {}
-  },
-  {
-    type: 'VOLTAGE_REG_7812',
-    category: 'analog',
-    name: 'LM7812 (+12V Linear Regulator)',
-    partNumber: 'LM7812',
-    family: 'Voltage Regulators',
-    description: 'Fixed +12V positive 1.5A voltage regulator.',
-    width: 64,
-    height: 48,
-    pins: [
-      { id: 'p0', x: 0, y: 16, label: 'VIN' },
-      { id: 'p1', x: 32, y: 48, label: 'GND' },
-      { id: 'p2', x: 64, y: 16, label: 'VOUT' }
-    ],
-    defaultProps: {}
-  },
-  {
-    type: 'VOLTAGE_REG_LM317',
-    category: 'analog',
-    name: 'LM317 Adjustable Regulator (1.2V-37V)',
-    partNumber: 'LM317',
-    family: 'Voltage Regulators',
-    description: 'Adjustable linear regulator with 1.25V internal reference.',
-    width: 64,
-    height: 48,
-    pins: [
-      { id: 'p0', x: 0, y: 16, label: 'VIN' },
-      { id: 'p1', x: 32, y: 48, label: 'ADJ' },
-      { id: 'p2', x: 64, y: 16, label: 'VOUT' }
-    ],
-    defaultProps: { calculatedVout: 5.0 }
-  },
-  {
-    type: 'VOLTAGE_REF_TL431',
-    category: 'analog',
-    name: 'TL431 Programmable Shunt Reference',
-    partNumber: 'TL431',
-    family: 'Voltage References',
-    description: 'Precision adjustable 2.5V shunt regulator reference diode.',
-    width: 48,
-    height: 48,
-    pins: [
-      { id: 'p0', x: 0, y: 24, label: 'REF' },
-      { id: 'p1', x: 24, y: 0, label: 'Cathode' },
-      { id: 'p2', x: 24, y: 48, label: 'Anode' }
-    ],
-    defaultProps: { vref: 2.5 }
+    defaultProps: { label: 'OPAMP_VIRT' }
   },
 
-  // ================= 6. TTL (7400 SERIES LOGIC) =================
+  // ================= 7. TTL 7400 SERIES LOGIC =================
   {
     type: 'TTL_7408',
     category: 'ttl',
     name: '7408 Quad 2-Input AND Gate',
     partNumber: '74LS08',
     family: 'Basic Gates',
-    description: 'Standard 5V TTL positive AND gate.',
+    description: 'Standard 5V TTL positive AND logic gate.',
     width: 56,
     height: 40,
     pins: [
@@ -1232,7 +615,7 @@ export const COMPONENT_CATALOG = [
       { id: 'p1', x: 0, y: 28, label: 'B' },
       { id: 'p2', x: 56, y: 20, label: 'Y' }
     ],
-    defaultProps: { gateType: 'AND' }
+    defaultProps: { gateType: 'AND', label: '7408' }
   },
   {
     type: 'TTL_7400',
@@ -1240,7 +623,7 @@ export const COMPONENT_CATALOG = [
     name: '7400 Quad 2-Input NAND Gate',
     partNumber: '74LS00',
     family: 'Basic Gates',
-    description: 'Standard 5V TTL 2-input NAND gate.',
+    description: 'Standard 5V TTL 2-input NAND logic gate.',
     width: 56,
     height: 40,
     pins: [
@@ -1248,7 +631,7 @@ export const COMPONENT_CATALOG = [
       { id: 'p1', x: 0, y: 28, label: 'B' },
       { id: 'p2', x: 56, y: 20, label: 'Y' }
     ],
-    defaultProps: { gateType: 'NAND' }
+    defaultProps: { gateType: 'NAND', label: '7400' }
   },
   {
     type: 'TTL_7432',
@@ -1256,7 +639,7 @@ export const COMPONENT_CATALOG = [
     name: '7432 Quad 2-Input OR Gate',
     partNumber: '74LS32',
     family: 'Basic Gates',
-    description: 'Standard 5V TTL positive OR gate.',
+    description: 'Standard 5V TTL positive OR logic gate.',
     width: 56,
     height: 40,
     pins: [
@@ -1264,38 +647,22 @@ export const COMPONENT_CATALOG = [
       { id: 'p1', x: 0, y: 28, label: 'B' },
       { id: 'p2', x: 56, y: 20, label: 'Y' }
     ],
-    defaultProps: { gateType: 'OR' }
-  },
-  {
-    type: 'TTL_7402',
-    category: 'ttl',
-    name: '7402 Quad 2-Input NOR Gate',
-    partNumber: '74LS02',
-    family: 'Basic Gates',
-    description: 'Standard 5V TTL 2-input NOR gate.',
-    width: 56,
-    height: 40,
-    pins: [
-      { id: 'p0', x: 0, y: 12, label: 'A' },
-      { id: 'p1', x: 0, y: 28, label: 'B' },
-      { id: 'p2', x: 56, y: 20, label: 'Y' }
-    ],
-    defaultProps: { gateType: 'NOR' }
+    defaultProps: { gateType: 'OR', label: '7432' }
   },
   {
     type: 'TTL_7404',
     category: 'ttl',
-    name: '7404 Hex Inverter (NOT)',
+    name: '7404 Hex Inverter (NOT Gate)',
     partNumber: '74LS04',
     family: 'Basic Gates',
-    description: 'Standard 5V TTL inverting gate.',
+    description: 'Standard 5V TTL NOT logic gate.',
     width: 48,
     height: 32,
     pins: [
       { id: 'p0', x: 0, y: 16, label: 'A' },
       { id: 'p1', x: 48, y: 16, label: 'Y' }
     ],
-    defaultProps: { gateType: 'NOT' }
+    defaultProps: { gateType: 'NOT', label: '7404' }
   },
   {
     type: 'TTL_7486',
@@ -1303,7 +670,7 @@ export const COMPONENT_CATALOG = [
     name: '7486 Quad 2-Input XOR Gate',
     partNumber: '74LS86',
     family: 'Basic Gates',
-    description: 'Standard 5V TTL Exclusive-OR gate.',
+    description: 'Standard 5V TTL Exclusive-OR logic gate.',
     width: 56,
     height: 40,
     pins: [
@@ -1311,156 +678,17 @@ export const COMPONENT_CATALOG = [
       { id: 'p1', x: 0, y: 28, label: 'B' },
       { id: 'p2', x: 56, y: 20, label: 'Y' }
     ],
-    defaultProps: { gateType: 'XOR' }
-  },
-  {
-    type: 'TTL_7474',
-    category: 'ttl',
-    name: '7474 Dual D-Type Flip-Flop',
-    partNumber: '74LS74',
-    family: 'Flip-Flops & Latches',
-    description: 'Positive-edge-triggered D-FF with Preset and Clear.',
-    width: 64,
-    height: 56,
-    pins: [
-      { id: 'p0', x: 0, y: 16, label: 'D' },
-      { id: 'p1', x: 0, y: 36, label: 'CLK' },
-      { id: 'p2', x: 64, y: 16, label: 'Q' },
-      { id: 'p3', x: 64, y: 36, label: '~Q' }
-    ],
-    defaultProps: { qState: false }
-  },
-  {
-    type: 'TTL_7476',
-    category: 'ttl',
-    name: '7476 Dual JK Flip-Flop',
-    partNumber: '74LS76',
-    family: 'Flip-Flops & Latches',
-    description: 'Dual JK flip-flop with Set and Reset.',
-    width: 64,
-    height: 64,
-    pins: [
-      { id: 'p0', x: 0, y: 14, label: 'J' },
-      { id: 'p1', x: 0, y: 32, label: 'CLK' },
-      { id: 'p2', x: 0, y: 50, label: 'K' },
-      { id: 'p3', x: 64, y: 20, label: 'Q' },
-      { id: 'p4', x: 64, y: 44, label: '~Q' }
-    ],
-    defaultProps: { qState: false }
-  },
-  {
-    type: 'TTL_7490',
-    category: 'ttl',
-    name: '7490 Decade BCD Counter',
-    partNumber: '74LS90',
-    family: 'Counters & Shift Registers',
-    description: 'MOD-10 counter with 4-bit BCD outputs QA, QB, QC, QD.',
-    width: 72,
-    height: 64,
-    pins: [
-      { id: 'p0', x: 0, y: 20, label: 'CLK' },
-      { id: 'p1', x: 0, y: 44, label: 'RST' },
-      { id: 'p2', x: 72, y: 12, label: 'QA' },
-      { id: 'p3', x: 72, y: 26, label: 'QB' },
-      { id: 'p4', x: 72, y: 40, label: 'QC' },
-      { id: 'p5', x: 72, y: 54, label: 'QD' }
-    ],
-    defaultProps: { count: 0 }
-  },
-  {
-    type: 'TTL_7493',
-    category: 'ttl',
-    name: '7493 4-Bit Binary Counter (MOD-16)',
-    partNumber: '74LS93',
-    family: 'Counters & Shift Registers',
-    description: '4-bit ripple binary counter (0 to 15).',
-    width: 72,
-    height: 64,
-    pins: [
-      { id: 'p0', x: 0, y: 20, label: 'CLK' },
-      { id: 'p1', x: 0, y: 44, label: 'RST' },
-      { id: 'p2', x: 72, y: 12, label: 'QA' },
-      { id: 'p3', x: 72, y: 26, label: 'QB' },
-      { id: 'p4', x: 72, y: 40, label: 'QC' },
-      { id: 'p5', x: 72, y: 54, label: 'QD' }
-    ],
-    defaultProps: { count: 0 }
-  },
-  {
-    type: 'TTL_7447',
-    category: 'ttl',
-    name: '7447 BCD to 7-Segment Decoder',
-    partNumber: '74LS47',
-    family: 'Decoders & Multiplexers',
-    description: 'BCD to 7-segment active-low open-collector display decoder/driver.',
-    width: 80,
-    height: 80,
-    pins: [
-      { id: 'p0', x: 0, y: 16, label: 'A' },
-      { id: 'p1', x: 0, y: 32, label: 'B' },
-      { id: 'p2', x: 0, y: 48, label: 'C' },
-      { id: 'p3', x: 0, y: 64, label: 'D' },
-      { id: 'p4', x: 80, y: 10, label: 'a' },
-      { id: 'p5', x: 80, y: 20, label: 'b' },
-      { id: 'p6', x: 80, y: 30, label: 'c' },
-      { id: 'p7', x: 80, y: 40, label: 'd' },
-      { id: 'p8', x: 80, y: 50, label: 'e' },
-      { id: 'p9', x: 80, y: 60, label: 'f' },
-      { id: 'p10', x: 80, y: 70, label: 'g' }
-    ],
-    defaultProps: {}
-  },
-  {
-    type: 'TTL_74138',
-    category: 'ttl',
-    name: '74138 3-to-8 Line Decoder / DEMUX',
-    partNumber: '74LS138',
-    family: 'Decoders & Multiplexers',
-    description: '3-line binary address to 8 active-low decoded outputs.',
-    width: 80,
-    height: 90,
-    pins: [
-      { id: 'p0', x: 0, y: 20, label: 'A0' },
-      { id: 'p1', x: 0, y: 45, label: 'A1' },
-      { id: 'p2', x: 0, y: 70, label: 'A2' },
-      { id: 'p3', x: 80, y: 10, label: 'Y0' },
-      { id: 'p4', x: 80, y: 21, label: 'Y1' },
-      { id: 'p5', x: 80, y: 32, label: 'Y2' },
-      { id: 'p6', x: 80, y: 43, label: 'Y3' },
-      { id: 'p7', x: 80, y: 54, label: 'Y4' },
-      { id: 'p8', x: 80, y: 65, label: 'Y5' },
-      { id: 'p9', x: 80, y: 76, label: 'Y6' },
-      { id: 'p10', x: 80, y: 87, label: 'Y7' }
-    ],
-    defaultProps: {}
-  },
-  {
-    type: 'TTL_7483',
-    category: 'ttl',
-    name: '7483 4-Bit Binary Full Adder',
-    partNumber: '74LS83',
-    family: 'Arithmetic Units',
-    description: '4-bit parallel binary adder with carry-in and carry-out.',
-    width: 80,
-    height: 80,
-    pins: [
-      { id: 'p0', x: 0, y: 16, label: 'A (4b)' },
-      { id: 'p1', x: 0, y: 40, label: 'B (4b)' },
-      { id: 'p2', x: 0, y: 64, label: 'CIN' },
-      { id: 'p3', x: 80, y: 30, label: 'SUM' },
-      { id: 'p4', x: 80, y: 55, label: 'COUT' }
-    ],
-    defaultProps: {}
+    defaultProps: { gateType: 'XOR', label: '7486' }
   },
 
-  // ================= 7. CMOS (4000 SERIES LOGIC) =================
+  // ================= 8. CMOS 4000 SERIES LOGIC =================
   {
     type: 'CMOS_4017',
     category: 'cmos',
     name: '4017 Decade Counter / Divider',
     partNumber: 'CD4017B',
-    family: 'Counters & Clocks',
-    description: '5-stage Johnson counter with 10 decoded active-high outputs.',
+    family: 'Counters',
+    description: 'Decade counter with 10 decoded active-high outputs.',
     width: 80,
     height: 100,
     pins: [
@@ -1477,50 +705,17 @@ export const COMPONENT_CATALOG = [
       { id: 'p10', x: 80, y: 82, label: 'Q8' },
       { id: 'p11', x: 80, y: 91, label: 'Q9' }
     ],
-    defaultProps: { count: 0 }
-  },
-  {
-    type: 'CMOS_4066',
-    category: 'cmos',
-    name: '4066 Quad Bilateral Analog Switch',
-    partNumber: 'CD4066B',
-    family: 'Analog Switches',
-    description: 'Digitally controlled bidirectional switch for analog or digital signals.',
-    width: 64,
-    height: 48,
-    pins: [
-      { id: 'p0', x: 0, y: 16, label: 'IN/OUT' },
-      { id: 'p1', x: 64, y: 16, label: 'OUT/IN' },
-      { id: 'p2', x: 32, y: 48, label: 'CTRL' }
-    ],
-    defaultProps: { isOn: false }
-  },
-  {
-    type: 'CMOS_4013',
-    category: 'cmos',
-    name: '4013 Dual D-Type Flip-Flop',
-    partNumber: 'CD4013B',
-    family: 'Latches & Registers',
-    description: 'CMOS static dual D-flip flop with set/reset.',
-    width: 64,
-    height: 56,
-    pins: [
-      { id: 'p0', x: 0, y: 16, label: 'D' },
-      { id: 'p1', x: 0, y: 36, label: 'CLK' },
-      { id: 'p2', x: 64, y: 16, label: 'Q' },
-      { id: 'p3', x: 64, y: 36, label: '~Q' }
-    ],
-    defaultProps: { qState: false }
+    defaultProps: { count: 0, label: '4017' }
   },
 
-  // ================= 8. MIXED & SIGNAL PROCESSING =================
+  // ================= 9. MIXED SIGNAL & TIMERS =================
   {
     type: 'TIMER_555',
     category: 'mixed',
     name: 'NE555 Precision Timer IC',
     partNumber: 'NE555P',
     family: 'Timers',
-    description: 'Classic astable / monostable multivibrator timer with internal comparators.',
+    description: 'Precision timer IC for astable & monostable multivibrators.',
     width: 72,
     height: 80,
     pins: [
@@ -1533,177 +728,54 @@ export const COMPONENT_CATALOG = [
       { id: 'p6', x: 72, y: 16, label: 'DISCH (7)' },
       { id: 'p7', x: 0, y: 64, label: 'VCC (8)' }
     ],
-    defaultProps: {}
-  },
-  {
-    type: 'TIMER_556',
-    category: 'mixed',
-    name: 'NE556 Dual Timer IC',
-    partNumber: 'NE556',
-    family: 'Timers',
-    description: 'Dual 555 timers in a single 14-pin monolithic IC package.',
-    width: 80,
-    height: 90,
-    pins: [
-      { id: 'p0', x: 0, y: 20, label: 'DISCH 1' },
-      { id: 'p1', x: 0, y: 40, label: 'THRES 1' },
-      { id: 'p2', x: 0, y: 60, label: 'OUT 1' },
-      { id: 'p3', x: 80, y: 20, label: 'DISCH 2' },
-      { id: 'p4', x: 80, y: 40, label: 'THRES 2' },
-      { id: 'p5', x: 80, y: 60, label: 'OUT 2' }
-    ],
-    defaultProps: {}
-  },
-  {
-    type: 'ADC_0804',
-    category: 'mixed',
-    name: 'ADC0804 8-Bit A/D Converter',
-    partNumber: 'ADC0804',
-    family: 'Data Converters',
-    description: '8-bit successive approximation analog-to-digital converter.',
-    width: 80,
-    height: 80,
-    pins: [
-      { id: 'p0', x: 0, y: 24, label: 'VIN+' },
-      { id: 'p1', x: 0, y: 48, label: 'CLK' },
-      { id: 'p2', x: 80, y: 16, label: 'DB0-3' },
-      { id: 'p3', x: 80, y: 48, label: 'DB4-7' }
-    ],
-    defaultProps: {}
-  },
-  {
-    type: 'DAC_0808',
-    category: 'mixed',
-    name: 'DAC0808 8-Bit Multiplying D/A Converter',
-    partNumber: 'DAC0808',
-    family: 'Data Converters',
-    description: '8-bit multiplying digital-to-analog converter with R-2R ladder.',
-    width: 80,
-    height: 80,
-    pins: [
-      { id: 'p0', x: 0, y: 20, label: 'D0-3' },
-      { id: 'p1', x: 0, y: 50, label: 'D4-7' },
-      { id: 'p2', x: 80, y: 35, label: 'IOUT' }
-    ],
-    defaultProps: {}
+    defaultProps: { label: 'NE555' }
   },
 
-  // ================= 9. INDICATORS & OUTPUT DEVICES =================
+  // ================= 10. INDICATORS & OPTOELECTRONICS =================
   {
-    type: 'VOLTMETER_DC',
+    type: 'LED_RED',
     category: 'indicators',
-    name: 'DC Voltmeter Panel Meter',
-    partNumber: 'VM_DC',
-    family: 'Voltmeters & Ammeters',
-    description: 'High-impedance (100MΩ) digital DC voltage indicator.',
-    width: 64,
-    height: 40,
+    name: 'LED (Light Emitting Diode - Red)',
+    partNumber: 'LED_RED',
+    family: 'Optoelectronics',
+    description: 'Red indicator LED with dynamic luminous glow.',
+    width: 48,
+    height: 32,
     pins: [
-      { id: 'p0', x: 0, y: 20, label: '+' },
-      { id: 'p1', x: 64, y: 20, label: '-' }
+      { id: 'p0', x: 0, y: 16, label: 'A' },
+      { id: 'p1', x: 48, y: 16, label: 'K' }
     ],
-    defaultProps: {}
+    defaultProps: { forwardVoltage: 1.8, color: '#ef4444', brightness: 0, label: 'LED Red' }
   },
   {
-    type: 'VOLTMETER_AC',
+    type: 'LED_GREEN',
     category: 'indicators',
-    name: 'AC Voltmeter Panel Meter',
-    partNumber: 'VM_AC',
-    family: 'Voltmeters & Ammeters',
-    description: 'True RMS AC voltage panel meter.',
-    width: 64,
-    height: 40,
+    name: 'LED (Light Emitting Diode - Green)',
+    partNumber: 'LED_GREEN',
+    family: 'Optoelectronics',
+    description: 'Emerald green indicator LED.',
+    width: 48,
+    height: 32,
     pins: [
-      { id: 'p0', x: 0, y: 20, label: '~' },
-      { id: 'p1', x: 64, y: 20, label: '~' }
+      { id: 'p0', x: 0, y: 16, label: 'A' },
+      { id: 'p1', x: 48, y: 16, label: 'K' }
     ],
-    defaultProps: {}
-  },
-  {
-    type: 'AMMETER_DC',
-    category: 'indicators',
-    name: 'DC Ammeter Panel Meter',
-    partNumber: 'AM_DC',
-    family: 'Voltmeters & Ammeters',
-    description: 'In-line low-resistance (1mΩ) current measurement meter.',
-    width: 64,
-    height: 40,
-    pins: [
-      { id: 'p0', x: 0, y: 20, label: '+' },
-      { id: 'p1', x: 64, y: 20, label: '-' }
-    ],
-    defaultProps: {}
-  },
-  {
-    type: 'LOGIC_PROBE',
-    category: 'indicators',
-    name: 'Interactive Logic Probe',
-    partNumber: 'LOGIC_PROBE',
-    family: 'Lamps & Probes',
-    description: 'Multi-state logic visualizer: Red (HIGH), Green (LOW), Gray (Hi-Z).',
-    width: 36,
-    height: 36,
-    pins: [{ id: 'p0', x: 0, y: 18, label: 'IN' }],
-    defaultProps: {}
+    defaultProps: { forwardVoltage: 2.1, color: '#22c55e', brightness: 0, label: 'LED Green' }
   },
   {
     type: 'FILAMENT_LAMP',
     category: 'indicators',
-    name: 'Incandescent Filament Lamp',
+    name: 'Lamp / Bulb (12V Incandescent)',
     partNumber: 'LAMP_12V',
-    family: 'Lamps & Probes',
-    description: 'Tungsten bulb with dynamic thermal inertia and warm glow bloom.',
+    family: 'Indicators',
+    description: '12V filament bulb with dynamic thermal inertia and warm glow.',
     width: 48,
     height: 48,
     pins: [
       { id: 'p0', x: 0, y: 24, label: '1' },
       { id: 'p1', x: 48, y: 24, label: '2' }
     ],
-    defaultProps: { filamentTemp: 300, brightness: 0 }
-  },
-  {
-    type: 'SEVEN_SEGMENT_CC',
-    category: 'indicators',
-    name: '7-Segment Display (Common Cathode)',
-    partNumber: '7SEG_CC',
-    family: 'Displays',
-    description: 'Individual 8-pin LED segments (a-g, dp) with common ground pin.',
-    width: 56,
-    height: 80,
-    pins: [
-      { id: 'p0', x: 28, y: 80, label: 'COM' },
-      { id: 'p1', x: 8, y: 0, label: 'a' },
-      { id: 'p2', x: 20, y: 0, label: 'b' },
-      { id: 'p3', x: 32, y: 0, label: 'c' },
-      { id: 'p4', x: 44, y: 0, label: 'd' },
-      { id: 'p5', x: 8, y: 80, label: 'e' },
-      { id: 'p6', x: 20, y: 80, label: 'f' },
-      { id: 'p7', x: 36, y: 80, label: 'g' },
-      { id: 'p8', x: 48, y: 80, label: 'dp' }
-    ],
-    defaultProps: { activeSegments: [] }
-  },
-  {
-    type: 'SEVEN_SEGMENT_CA',
-    category: 'indicators',
-    name: '7-Segment Display (Common Anode)',
-    partNumber: '7SEG_CA',
-    family: 'Displays',
-    description: 'Active-low segments with common positive anode power rail.',
-    width: 56,
-    height: 80,
-    pins: [
-      { id: 'p0', x: 28, y: 0, label: 'COM (+V)' },
-      { id: 'p1', x: 8, y: 0, label: 'a' },
-      { id: 'p2', x: 20, y: 0, label: 'b' },
-      { id: 'p3', x: 32, y: 0, label: 'c' },
-      { id: 'p4', x: 44, y: 0, label: 'd' },
-      { id: 'p5', x: 8, y: 80, label: 'e' },
-      { id: 'p6', x: 20, y: 80, label: 'f' },
-      { id: 'p7', x: 36, y: 80, label: 'g' },
-      { id: 'p8', x: 48, y: 80, label: 'dp' }
-    ],
-    defaultProps: { activeSegments: [] }
+    defaultProps: { filamentTemp: 300, brightness: 0, label: '12V Bulb' }
   },
   {
     type: 'DCD_HEX',
@@ -1711,7 +783,7 @@ export const COMPONENT_CATALOG = [
     name: 'Decoded Hex Display (DCD_HEX)',
     partNumber: 'DCD_HEX',
     family: 'Displays',
-    description: 'Direct 4-bit binary input displaying characters 0 through F.',
+    description: 'Decoded 4-bit display rendering 0 through F directly.',
     width: 56,
     height: 64,
     pins: [
@@ -1720,128 +792,110 @@ export const COMPONENT_CATALOG = [
       { id: 'p2', x: 0, y: 40, label: 'D2' },
       { id: 'p3', x: 0, y: 54, label: 'D3' }
     ],
-    defaultProps: { displayedChar: '0' }
+    defaultProps: { displayedChar: '0', label: 'HEX' }
   },
   {
-    type: 'BARGRAPH_10',
+    type: 'VOLTMETER_DC',
     category: 'indicators',
-    name: 'Bargraph Array (10-Segment LED)',
-    partNumber: 'BARGRAPH_10',
-    family: 'Displays',
-    description: '10-segment illuminated LED bar level indicator.',
+    name: 'DC Voltmeter Panel Meter',
+    partNumber: 'VM_DC',
+    family: 'Meters',
+    description: 'Digital DC voltmeter with high input impedance.',
     width: 64,
-    height: 80,
+    height: 40,
     pins: [
-      { id: 'p0', x: 0, y: 10, label: 'Anodes' },
-      { id: 'p1', x: 64, y: 70, label: 'Cathodes' }
+      { id: 'p0', x: 0, y: 20, label: '+' },
+      { id: 'p1', x: 64, y: 20, label: '-' }
     ],
-    defaultProps: { level: 5 }
+    defaultProps: { label: 'DC Volts' }
   },
   {
-    type: 'LCD_16X2',
+    type: 'AMMETER_DC',
     category: 'indicators',
-    name: 'Alphanumeric LCD Module (16x2)',
-    partNumber: 'LCD_16X2',
-    family: 'Displays',
-    description: 'HD44780 standard parallel alphanumeric LCD screen.',
-    width: 90,
-    height: 56,
+    name: 'DC Ammeter Panel Meter',
+    partNumber: 'AM_DC',
+    family: 'Meters',
+    description: 'Low-impedance in-line current meter.',
+    width: 64,
+    height: 40,
     pins: [
-      { id: 'p0', x: 0, y: 14, label: 'RS' },
-      { id: 'p1', x: 0, y: 28, label: 'EN' },
-      { id: 'p2', x: 0, y: 42, label: 'DATA' }
+      { id: 'p0', x: 0, y: 20, label: '+' },
+      { id: 'p1', x: 64, y: 20, label: '-' }
     ],
-    defaultProps: { textLine1: 'MULTISIM PRO', textLine2: 'SYSTEM READY' }
-  },
-  {
-    type: 'PIEZO_BUZZER',
-    category: 'indicators',
-    name: 'Piezo Buzzer (Audio Synthesizer)',
-    partNumber: 'BUZZER_PIEZO',
-    family: 'Buzzer / Audio',
-    description: 'Acoustic audio transducer emitting audible beep via Web Audio API.',
-    width: 48,
-    height: 48,
-    pins: [
-      { id: 'p0', x: 0, y: 24, label: '+' },
-      { id: 'p1', x: 48, y: 24, label: '-' }
-    ],
-    defaultProps: { buzzerActive: false }
+    defaultProps: { label: 'DC Current' }
   },
 
-  // ================= 10. ADVANCED PERIPHERALS & SENSORS =================
-  {
-    type: 'KEYPAD_4X4',
-    category: 'sensors',
-    name: 'Matrix Keypad (4x4 Matrix)',
-    partNumber: 'KEYPAD_4X4',
-    family: 'Keypads',
-    description: '16-key matrix (0-9, *, #, A-D) with 4 row and 4 col scan pins.',
-    width: 72,
-    height: 72,
-    pins: [
-      { id: 'p0', x: 0, y: 12, label: 'R1' },
-      { id: 'p1', x: 0, y: 26, label: 'R2' },
-      { id: 'p2', x: 0, y: 40, label: 'R3' },
-      { id: 'p3', x: 0, y: 54, label: 'R4' },
-      { id: 'p4', x: 72, y: 12, label: 'C1' },
-      { id: 'p5', x: 72, y: 26, label: 'C2' },
-      { id: 'p6', x: 72, y: 40, label: 'C3' },
-      { id: 'p7', x: 72, y: 54, label: 'C4' }
-    ],
-    defaultProps: {}
-  },
+  // ================= 11. SENSORS & ELECTRO-MECHANICAL =================
   {
     type: 'LDR',
-    category: 'sensors',
-    name: 'LDR (Light Dependent Resistor)',
-    partNumber: 'NORP12_LDR',
+    category: 'sensors_electromech',
+    name: 'LDR (Light Dependent Resistor, 10–100k)',
+    partNumber: 'LDR_10_100K',
     family: 'Sensors',
-    description: 'CdS photoresistor with interactive Lux control slider.',
+    description: 'CdS photoresistor (10kΩ bright to 100kΩ dark) with interactive lux slider.',
     width: 56,
     height: 36,
     pins: [
       { id: 'p0', x: 0, y: 18, label: '1' },
       { id: 'p1', x: 56, y: 18, label: '2' }
     ],
-    defaultProps: { lux: 400, currentResistance: 2500 }
+    defaultProps: { lux: 400, currentResistance: 25000, label: 'LDR' }
   },
   {
-    type: 'THERMISTOR_NTC',
-    category: 'sensors',
-    name: 'NTC Thermistor (Negative Temp Coefficient)',
-    partNumber: 'NTC_10K',
-    family: 'Sensors',
-    description: 'Temperature sensor with interactive °C temperature slider.',
-    width: 56,
-    height: 36,
+    type: 'RELAY_5V',
+    category: 'sensors_electromech',
+    name: 'Relay (5V Electromechanical SPDT)',
+    partNumber: 'RELAY_5V',
+    family: 'Relays',
+    description: '5V coil activated switch with isolated Common, NO, and NC contacts.',
+    width: 64,
+    height: 56,
     pins: [
-      { id: 'p0', x: 0, y: 18, label: '1' },
-      { id: 'p1', x: 56, y: 18, label: '2' }
+      { id: 'p0', x: 0, y: 14, label: 'Coil+' },
+      { id: 'p1', x: 0, y: 42, label: 'Coil-' },
+      { id: 'p2', x: 64, y: 28, label: 'COM' },
+      { id: 'p3', x: 64, y: 12, label: 'NC' },
+      { id: 'p4', x: 64, y: 44, label: 'NO' }
     ],
-    defaultProps: { temperature: 25, currentResistance: 10000 }
+    defaultProps: { pullInVoltage: 3.5, energized: false, label: '5V Relay' }
   },
   {
-    type: 'PHOTODIODE',
-    category: 'sensors',
-    name: 'Silicon PIN Photodiode',
-    partNumber: 'BPW34',
-    family: 'Sensors',
-    description: 'High-speed light sensor producing photocurrent proportional to irradiance.',
+    type: 'RELAY_12V',
+    category: 'sensors_electromech',
+    name: 'Relay (12V Electromechanical SPDT)',
+    partNumber: 'RELAY_12V',
+    family: 'Relays',
+    description: '12V coil activated power relay.',
+    width: 64,
+    height: 56,
+    pins: [
+      { id: 'p0', x: 0, y: 14, label: 'Coil+' },
+      { id: 'p1', x: 0, y: 42, label: 'Coil-' },
+      { id: 'p2', x: 64, y: 28, label: 'COM' },
+      { id: 'p3', x: 64, y: 12, label: 'NC' },
+      { id: 'p4', x: 64, y: 44, label: 'NO' }
+    ],
+    defaultProps: { pullInVoltage: 8.5, energized: false, label: '12V Relay' }
+  },
+  {
+    type: 'SWITCH_SPST',
+    category: 'sensors_electromech',
+    name: 'SPST Toggle Switch',
+    partNumber: 'SPST',
+    family: 'Switches',
+    description: 'Single-Pole Single-Throw switch (click on canvas to toggle).',
     width: 48,
     height: 32,
     pins: [
-      { id: 'p0', x: 0, y: 16, label: 'A' },
-      { id: 'p1', x: 48, y: 16, label: 'K' }
+      { id: 'p0', x: 0, y: 16, label: '1' },
+      { id: 'p1', x: 48, y: 16, label: '2' }
     ],
-    defaultProps: { lux: 500 }
+    defaultProps: { isOpen: false, label: 'SW1' }
   },
-
-  // ================= 11. ELECTRO-MECHANICAL & POWER =================
   {
     type: 'DC_MOTOR',
-    category: 'electromech',
-    name: 'DC Permanent Magnet Motor',
+    category: 'sensors_electromech',
+    name: 'DC Permanent Magnet Motor (12V)',
     partNumber: 'DC_MOTOR_12V',
     family: 'Motors',
     description: 'Electromechanical motor with animated rotating shaft & live RPM gauge.',
@@ -1851,55 +905,6 @@ export const COMPONENT_CATALOG = [
       { id: 'p0', x: 0, y: 28, label: '+' },
       { id: 'p1', x: 56, y: 28, label: '-' }
     ],
-    defaultProps: { rpm: 0, motorAngle: 0 }
-  },
-  {
-    type: 'SERVO_MOTOR',
-    category: 'electromech',
-    name: 'RC Servo Motor (0° - 180°)',
-    partNumber: 'SERVO_9G',
-    family: 'Motors',
-    description: 'PWM signal controlled positioning motor with animated arm angle.',
-    width: 56,
-    height: 56,
-    pins: [
-      { id: 'p0', x: 0, y: 14, label: 'PWM' },
-      { id: 'p1', x: 0, y: 28, label: 'V+' },
-      { id: 'p2', x: 0, y: 42, label: 'GND' }
-    ],
-    defaultProps: { angle: 90 }
-  },
-  {
-    type: 'FUSE',
-    category: 'electromech',
-    name: 'Fast-Acting Cartridge Fuse (Rated Virtual)',
-    partNumber: 'FUSE_1A',
-    family: 'Protection',
-    description: 'Rated safety fuse that blows with animated smoke puff when I > I_rated.',
-    width: 52,
-    height: 24,
-    pins: [
-      { id: 'p0', x: 0, y: 12, label: '1' },
-      { id: 'p1', x: 52, y: 12, label: '2' }
-    ],
-    defaultProps: { ratedCurrent: 1.0, isBlown: false, isRatedVirtual: true }
-  },
-  {
-    type: 'PWM_SG3525',
-    category: 'electromech',
-    name: 'SG3525 Voltage-Mode PWM Controller',
-    partNumber: 'SG3525A',
-    family: 'Power Supplies / Switching',
-    description: 'Switch-mode power supply controller with dual totem-pole outputs.',
-    width: 80,
-    height: 80,
-    pins: [
-      { id: 'p0', x: 0, y: 20, label: 'COMP' },
-      { id: 'p1', x: 0, y: 40, label: 'RT' },
-      { id: 'p2', x: 0, y: 60, label: 'CT' },
-      { id: 'p3', x: 80, y: 25, label: 'OUT A' },
-      { id: 'p4', x: 80, y: 55, label: 'OUT B' }
-    ],
-    defaultProps: { frequency: 50000 }
+    defaultProps: { rpm: 0, motorAngle: 0, label: 'Motor' }
   }
 ];

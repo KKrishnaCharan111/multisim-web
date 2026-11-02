@@ -474,10 +474,14 @@ export class MNACircuitSolver {
         break;
       }
 
-      case 'RELAY_SPDT': {
-        this.stampConductance(A, n[0], n[1], 1 / 100);
+      case 'RELAY_SPDT':
+      case 'RELAY_5V':
+      case 'RELAY_12V': {
+        const coilR = comp.type === 'RELAY_5V' ? 50 : 120;
+        this.stampConductance(A, n[0], n[1], 1 / coilR);
         const vCoil = Math.abs((V[n[0] - 1] || 0) - (V[n[1] - 1] || 0));
-        const energized = vCoil >= (comp.pullInVoltage ?? 3.5);
+        const pullIn = comp.pullInVoltage ?? (comp.type === 'RELAY_5V' ? 3.5 : 8.5);
+        const energized = vCoil >= pullIn;
         comp.energized = energized;
         this.stampConductance(A, n[2], n[3], 1 / (energized ? 1e8 : 0.05));
         this.stampConductance(A, n[2], n[4], 1 / (energized ? 0.05 : 1e8));
@@ -596,7 +600,10 @@ export class MNACircuitSolver {
 
       case 'BJT_NPN_2N2222':
       case 'BJT_NPN_2N3904':
+      case 'BJT_NPN_BC107':
+      case 'BJT_NPN_BC147':
       case 'BJT_NPN_BC547':
+      case 'BJT_NPN_BF194':
       case 'BJT_NPN_TIP31':
       case 'DARLINGTON_TIP120': {
         const vC = n[0] > 0 ? (V[n[0] - 1] || 0) : 0;
@@ -650,15 +657,15 @@ export class MNACircuitSolver {
         break;
       }
 
-      case 'JFET_N_2N5457': {
-        // Drain 0, Gate 1, Source 2
+      case 'JFET_N_2N5457':
+      case 'JFET_N_BFW11': {
         const vD = n[0] > 0 ? (V[n[0] - 1] || 0) : 0;
         const vG = n[1] > 0 ? (V[n[1] - 1] || 0) : 0;
         const vS = n[2] > 0 ? (V[n[2] - 1] || 0) : 0;
         const Vgs = vG - vS;
         const Vds = vD - vS;
-        const Vp = comp.vPinchOff ?? -2.0;
-        const Idss = comp.idss ?? 0.003;
+        const Vp = comp.vPinchOff ?? (comp.type === 'JFET_N_BFW11' ? -2.5 : -2.0);
+        const Idss = comp.idss ?? (comp.type === 'JFET_N_BFW11' ? 0.007 : 0.003);
 
         this.stampConductance(A, n[1], n[2], 1e-11);
         if (Vgs > Vp && Vds > 0) {
@@ -718,6 +725,7 @@ export class MNACircuitSolver {
       }
 
       case 'OPAMP_741':
+      case 'OPAMP_LM358':
       case 'OPAMP_3T_VIRTUAL':
       case 'OPAMP_NE5532':
       case 'INST_AMP_AD620': {

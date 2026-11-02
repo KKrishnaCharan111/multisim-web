@@ -1,7 +1,7 @@
 /**
- * Multisim Web - Schematic Canvas Renderer & Interactive Wiring System
- * Renders ANSI/IEEE standard electronic symbols, live current flow animations,
- * interactive controls, and exports high-resolution circuit diagrams.
+ * Multisim Web Studio - Schematic Canvas Renderer & Interactive Wiring System
+ * Professional academic & engineering schematic rendering with 360° component rotation,
+ * real-time voltage wire coloring, electron charge flow animations, and image export.
  */
 
 export class SchematicRenderer {
@@ -10,13 +10,11 @@ export class SchematicRenderer {
     this.ctx = canvas.getContext('2d');
     this.solver = solver;
 
-    // View transform
     this.zoom = 1.0;
     this.panX = 60;
     this.panY = 60;
     this.gridSize = 20;
 
-    // Selections and interaction state
     this.selectedComponent = null;
     this.hoveredPin = null;
     this.isWiring = false;
@@ -24,12 +22,10 @@ export class SchematicRenderer {
     this.mouseWorldPos = { x: 0, y: 0 };
     this.wireSegments = [];
 
-    // Visual options
     this.showCurrentFlow = true;
     this.currentDotOffset = 0;
-    this.theme = 'dark'; // 'dark' or 'light'
+    this.theme = 'dark';
 
-    // Particle system for blown fuses and smoke
     this.smokeParticles = [];
     this.lastFrameTime = performance.now();
   }
@@ -54,6 +50,19 @@ export class SchematicRenderer {
 
   snapToGrid(val) {
     return Math.round(val / this.gridSize) * this.gridSize;
+  }
+
+  // Exact world coordinate of any component pin considering rotation (0°, 90°, 180°, 270°)
+  getPinWorldPos(comp, pin) {
+    const theta = ((comp.rotation || 0) * Math.PI) / 180;
+    const cx = comp.x + comp.width / 2;
+    const cy = comp.y + comp.height / 2;
+    const dx = pin.x - comp.width / 2;
+    const dy = pin.y - comp.height / 2;
+    return {
+      x: cx + dx * Math.cos(theta) - dy * Math.sin(theta),
+      y: cy + dx * Math.sin(theta) + dy * Math.cos(theta)
+    };
   }
 
   render() {
@@ -132,7 +141,8 @@ export class SchematicRenderer {
         const pin = comp.pins[pIdx];
         if (pin.netId) {
           if (!netGroups.has(pin.netId)) netGroups.set(pin.netId, []);
-          netGroups.get(pin.netId).push({ comp, pin, pIdx, x: comp.x + pin.x, y: comp.y + pin.y });
+          const wpos = this.getPinWorldPos(comp, pin);
+          netGroups.get(pin.netId).push({ comp, pin, pIdx, x: wpos.x, y: wpos.y });
         }
       }
     }
@@ -227,10 +237,7 @@ export class SchematicRenderer {
 
   drawActiveWire() {
     const ctx = this.ctx;
-    const p1 = {
-      x: this.wireStartPin.comp.x + this.wireStartPin.pin.x,
-      y: this.wireStartPin.comp.y + this.wireStartPin.pin.y
-    };
+    const p1 = this.getPinWorldPos(this.wireStartPin.comp, this.wireStartPin.pin);
     const p2 = this.mouseWorldPos;
     const midX = (p1.x + p2.x) / 2;
 
@@ -252,7 +259,15 @@ export class SchematicRenderer {
     const isSelected = this.selectedComponent?.id === comp.id;
 
     ctx.save();
-    ctx.translate(comp.x, comp.y);
+    // Translate to center and apply 360° rotation!
+    const cx = comp.x + comp.width / 2;
+    const cy = comp.y + comp.height / 2;
+    ctx.translate(cx, cy);
+    const rot = comp.rotation || 0;
+    if (rot !== 0) {
+      ctx.rotate((rot * Math.PI) / 180);
+    }
+    ctx.translate(-comp.width / 2, -comp.height / 2);
 
     if (isSelected) {
       ctx.strokeStyle = '#0284c7';
@@ -262,7 +277,6 @@ export class SchematicRenderer {
       ctx.setLineDash([]);
     }
 
-    // High contrast strokes in both light & dark themes
     ctx.strokeStyle = this.theme === 'light' ? '#0f172a' : '#f1f5f9';
     ctx.fillStyle = this.theme === 'light' ? '#0f172a' : '#f1f5f9';
     ctx.lineWidth = 2.0;
@@ -361,8 +375,7 @@ export class SchematicRenderer {
         break;
       }
 
-      case 'DIGITAL_CLOCK':
-      case 'PULSE_VOLTAGE': {
+      case 'DIGITAL_CLOCK': {
         ctx.strokeRect(6, 6, 36, 36);
         ctx.beginPath();
         ctx.moveTo(0, 24);
@@ -379,8 +392,23 @@ export class SchematicRenderer {
         break;
       }
 
-      case 'RESISTOR':
-      case 'RESISTOR_VIRTUAL': {
+      case 'SINE_GEN': {
+        ctx.beginPath();
+        ctx.arc(24, 24, 16, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(24, 0);
+        ctx.lineTo(24, 8);
+        ctx.moveTo(24, 40);
+        ctx.lineTo(24, 48);
+        ctx.moveTo(15, 24);
+        ctx.quadraticCurveTo(19, 14, 24, 24);
+        ctx.quadraticCurveTo(29, 34, 33, 24);
+        ctx.stroke();
+        break;
+      }
+
+      case 'RESISTOR': {
         ctx.beginPath();
         ctx.moveTo(0, 12);
         ctx.lineTo(10, 12);
@@ -420,8 +448,7 @@ export class SchematicRenderer {
         break;
       }
 
-      case 'CAPACITOR':
-      case 'VARIABLE_CAPACITOR': {
+      case 'CAPACITOR': {
         ctx.beginPath();
         ctx.moveTo(0, 16);
         ctx.lineTo(20, 16);
@@ -432,12 +459,6 @@ export class SchematicRenderer {
         ctx.moveTo(28, 16);
         ctx.lineTo(48, 16);
         ctx.stroke();
-        if (comp.type === 'VARIABLE_CAPACITOR') {
-          ctx.beginPath();
-          ctx.moveTo(14, 30);
-          ctx.lineTo(34, 2);
-          ctx.stroke();
-        }
         break;
       }
 
@@ -458,8 +479,7 @@ export class SchematicRenderer {
         break;
       }
 
-      case 'INDUCTOR':
-      case 'VARIABLE_INDUCTOR': {
+      case 'INDUCTOR': {
         ctx.beginPath();
         ctx.moveTo(0, 14);
         ctx.lineTo(12, 14);
@@ -476,89 +496,9 @@ export class SchematicRenderer {
         break;
       }
 
-      case 'TRANSFORMER':
-      case 'CENTER_TAP_TRANSFORMER': {
-        // Primary coil
-        ctx.beginPath();
-        ctx.moveTo(0, 12);
-        ctx.lineTo(12, 12);
-        ctx.moveTo(0, comp.height - 12);
-        ctx.lineTo(12, comp.height - 12);
-        ctx.stroke();
-        for (let i = 0; i < 3; i++) {
-          ctx.beginPath();
-          ctx.arc(12, 18 + i * 12, 6, -Math.PI / 2, Math.PI / 2, true);
-          ctx.stroke();
-        }
-        // Core lines
-        ctx.beginPath();
-        ctx.moveTo(28, 8);
-        ctx.lineTo(28, comp.height - 8);
-        ctx.moveTo(34, 8);
-        ctx.lineTo(34, comp.height - 8);
-        ctx.stroke();
-        // Secondary coil
-        for (let i = 0; i < 3; i++) {
-          ctx.beginPath();
-          ctx.arc(50, 18 + i * 12, 6, -Math.PI / 2, Math.PI / 2, false);
-          ctx.stroke();
-        }
-        ctx.beginPath();
-        ctx.moveTo(50, 12);
-        ctx.lineTo(comp.width, 12);
-        ctx.moveTo(50, comp.height - 12);
-        ctx.lineTo(comp.width, comp.height - 12);
-        if (comp.type === 'CENTER_TAP_TRANSFORMER') {
-          ctx.moveTo(50, 32);
-          ctx.lineTo(comp.width, 32);
-        }
-        ctx.stroke();
-        break;
-      }
-
-      case 'SWITCH_SPST':
-      case 'PUSH_BUTTON_NO': {
-        ctx.beginPath();
-        ctx.moveTo(0, 16);
-        ctx.lineTo(14, 16);
-        ctx.moveTo(34, 16);
-        ctx.lineTo(48, 16);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.arc(14, 16, 2.5, 0, Math.PI * 2);
-        ctx.arc(34, 16, 2.5, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(14, 16);
-        ctx.lineTo(comp.isOpen ? 32 : 34, comp.isOpen ? 4 : 16);
-        ctx.stroke();
-        break;
-      }
-
-      case 'RELAY_SPDT': {
-        ctx.strokeRect(10, 6, 44, 44);
-        ctx.beginPath();
-        ctx.moveTo(0, 14);
-        ctx.lineTo(10, 14);
-        ctx.moveTo(0, 42);
-        ctx.lineTo(10, 42);
-        ctx.moveTo(54, 28);
-        ctx.lineTo(64, 28);
-        ctx.moveTo(54, 12);
-        ctx.lineTo(64, 12);
-        ctx.moveTo(54, 44);
-        ctx.lineTo(64, 44);
-        ctx.moveTo(32, 28);
-        ctx.lineTo(48, comp.energized ? 44 : 12);
-        ctx.stroke();
-        break;
-      }
-
       case 'DIODE_1N4007':
       case 'DIODE_1N4001':
-      case 'DIODE_1N5408':
-      case 'DIODE_1N4148':
-      case 'SCHOTTKY_1N5819': {
+      case 'DIODE_1N4148': {
         ctx.beginPath();
         ctx.moveTo(0, 14);
         ctx.lineTo(16, 14);
@@ -576,8 +516,7 @@ export class SchematicRenderer {
         break;
       }
 
-      case 'ZENER_1N4733A':
-      case 'ZENER_1N4742A': {
+      case 'ZENER_1N4733A': {
         ctx.beginPath();
         ctx.moveTo(0, 14);
         ctx.lineTo(16, 14);
@@ -593,42 +532,6 @@ export class SchematicRenderer {
         ctx.lineTo(32, 4);
         ctx.lineTo(32, 24);
         ctx.lineTo(36, 24);
-        ctx.stroke();
-        break;
-      }
-
-      case 'LED_RED':
-      case 'LED_GREEN':
-      case 'LED_BLUE':
-      case 'LED_YELLOW': {
-        if (comp.brightness > 0.05) {
-          ctx.save();
-          ctx.fillStyle = comp.color || '#ef4444';
-          ctx.shadowColor = comp.color || '#ef4444';
-          ctx.shadowBlur = 18 * comp.brightness;
-          ctx.globalAlpha = Math.min(0.85, comp.brightness);
-          ctx.beginPath();
-          ctx.arc(24, 16, 14, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.restore();
-        }
-        ctx.beginPath();
-        ctx.moveTo(0, 16);
-        ctx.lineTo(16, 16);
-        ctx.moveTo(32, 16);
-        ctx.lineTo(48, 16);
-        ctx.moveTo(16, 6);
-        ctx.lineTo(32, 16);
-        ctx.lineTo(16, 26);
-        ctx.closePath();
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(32, 6);
-        ctx.lineTo(32, 26);
-        ctx.moveTo(22, 4);
-        ctx.lineTo(28, -2);
-        ctx.moveTo(28, 6);
-        ctx.lineTo(34, 0);
         ctx.stroke();
         break;
       }
@@ -659,11 +562,11 @@ export class SchematicRenderer {
         break;
       }
 
-      case 'BJT_NPN_2N2222':
-      case 'BJT_NPN_2N3904':
+      case 'BJT_NPN_BC107':
+      case 'BJT_NPN_BC147':
       case 'BJT_NPN_BC547':
-      case 'BJT_NPN_TIP31':
-      case 'DARLINGTON_TIP120': {
+      case 'BJT_NPN_BF194':
+      case 'BJT_NPN_2N2222': {
         ctx.beginPath();
         ctx.arc(26, 24, 18, 0, Math.PI * 2);
         ctx.stroke();
@@ -688,8 +591,7 @@ export class SchematicRenderer {
         break;
       }
 
-      case 'BJT_PNP_2N2907':
-      case 'BJT_PNP_BC557': {
+      case 'BJT_PNP_2N2907': {
         ctx.beginPath();
         ctx.arc(26, 24, 18, 0, Math.PI * 2);
         ctx.stroke();
@@ -714,9 +616,38 @@ export class SchematicRenderer {
         break;
       }
 
-      case 'MOSFET_N_IRF540':
-      case 'MOSFET_2N7000':
-      case 'IGBT_IRG4BC20': {
+      case 'JFET_N_BFW11': {
+        ctx.beginPath();
+        ctx.arc(26, 25, 18, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(0, 25);
+        ctx.lineTo(16, 25);
+        ctx.moveTo(16, 10);
+        ctx.lineTo(16, 40);
+        ctx.moveTo(24, 12);
+        ctx.lineTo(38, 12);
+        ctx.lineTo(38, 0);
+        ctx.moveTo(24, 38);
+        ctx.lineTo(38, 38);
+        ctx.lineTo(38, 50);
+        ctx.moveTo(24, 10);
+        ctx.lineTo(24, 40);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(16, 25);
+        ctx.lineTo(24, 25);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(21, 22);
+        ctx.lineTo(25, 25);
+        ctx.lineTo(21, 28);
+        ctx.closePath();
+        ctx.fill();
+        break;
+      }
+
+      case 'MOSFET_N_IRF540': {
         ctx.beginPath();
         ctx.moveTo(0, 36);
         ctx.lineTo(14, 36);
@@ -741,9 +672,8 @@ export class SchematicRenderer {
       }
 
       case 'OPAMP_741':
-      case 'OPAMP_3T_VIRTUAL':
-      case 'OPAMP_NE5532':
-      case 'INST_AMP_AD620': {
+      case 'OPAMP_LM358':
+      case 'OPAMP_3T_VIRTUAL': {
         ctx.beginPath();
         ctx.moveTo(12, 4);
         ctx.lineTo(54, 28);
@@ -757,7 +687,7 @@ export class SchematicRenderer {
         ctx.lineTo(12, 40);
         ctx.moveTo(54, 28);
         ctx.lineTo(64, 28);
-        if (comp.type === 'OPAMP_741' || comp.type === 'OPAMP_NE5532') {
+        if (comp.type === 'OPAMP_741' || comp.type === 'OPAMP_LM358') {
           ctx.moveTo(32, 0);
           ctx.lineTo(32, 15);
           ctx.moveTo(32, 56);
@@ -815,8 +745,7 @@ export class SchematicRenderer {
         break;
       }
 
-      case 'TTL_7432':
-      case 'TTL_7402': {
+      case 'TTL_7432': {
         ctx.beginPath();
         ctx.moveTo(10, 6);
         ctx.quadraticCurveTo(18, 20, 10, 34);
@@ -853,16 +782,144 @@ export class SchematicRenderer {
         break;
       }
 
-      case 'DCD_HEX': {
-        ctx.strokeRect(8, 4, 40, 56);
-        ctx.save();
-        ctx.fillStyle = '#ef4444';
-        ctx.shadowColor = '#ef4444';
-        ctx.shadowBlur = 8;
-        ctx.font = 'bold 32px "Courier New", monospace';
-        ctx.textAlign = 'center';
-        ctx.fillText(comp.displayedChar || '0', 28, 44);
-        ctx.restore();
+      case 'TTL_7486': {
+        ctx.beginPath();
+        ctx.moveTo(4, 6);
+        ctx.quadraticCurveTo(12, 20, 4, 34);
+        ctx.moveTo(10, 6);
+        ctx.quadraticCurveTo(18, 20, 10, 34);
+        ctx.quadraticCurveTo(34, 34, 42, 20);
+        ctx.quadraticCurveTo(34, 6, 10, 6);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(0, 12);
+        ctx.lineTo(14, 12);
+        ctx.moveTo(0, 28);
+        ctx.lineTo(14, 28);
+        ctx.moveTo(42, 20);
+        ctx.lineTo(56, 20);
+        ctx.stroke();
+        break;
+      }
+
+      case 'LED_RED':
+      case 'LED_GREEN': {
+        if (comp.brightness > 0.05) {
+          ctx.save();
+          ctx.fillStyle = comp.color || '#ef4444';
+          ctx.shadowColor = comp.color || '#ef4444';
+          ctx.shadowBlur = 18 * comp.brightness;
+          ctx.globalAlpha = Math.min(0.85, comp.brightness);
+          ctx.beginPath();
+          ctx.arc(24, 16, 14, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+        ctx.beginPath();
+        ctx.moveTo(0, 16);
+        ctx.lineTo(16, 16);
+        ctx.moveTo(32, 16);
+        ctx.lineTo(48, 16);
+        ctx.moveTo(16, 6);
+        ctx.lineTo(32, 16);
+        ctx.lineTo(16, 26);
+        ctx.closePath();
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(32, 6);
+        ctx.lineTo(32, 26);
+        ctx.moveTo(22, 4);
+        ctx.lineTo(28, -2);
+        ctx.moveTo(28, 6);
+        ctx.lineTo(34, 0);
+        ctx.stroke();
+        break;
+      }
+
+      case 'FILAMENT_LAMP': {
+        ctx.beginPath();
+        ctx.arc(24, 24, 16, 0, Math.PI * 2);
+        ctx.stroke();
+        if (comp.brightness > 0.05) {
+          ctx.save();
+          ctx.fillStyle = '#fbbf24';
+          ctx.shadowColor = '#fbbf24';
+          ctx.shadowBlur = 24 * comp.brightness;
+          ctx.globalAlpha = Math.min(0.9, comp.brightness);
+          ctx.beginPath();
+          ctx.arc(24, 24, 15, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+        ctx.beginPath();
+        ctx.moveTo(0, 24);
+        ctx.lineTo(8, 24);
+        ctx.moveTo(40, 24);
+        ctx.lineTo(48, 24);
+        ctx.moveTo(13, 13);
+        ctx.lineTo(35, 35);
+        ctx.moveTo(35, 13);
+        ctx.lineTo(13, 35);
+        ctx.stroke();
+        break;
+      }
+
+      case 'LDR': {
+        ctx.beginPath();
+        ctx.arc(28, 18, 16, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(0, 18);
+        ctx.lineTo(14, 18);
+        ctx.lineTo(18, 12);
+        ctx.lineTo(24, 24);
+        ctx.lineTo(30, 12);
+        ctx.lineTo(36, 24);
+        ctx.lineTo(40, 18);
+        ctx.lineTo(56, 18);
+        ctx.moveTo(8, 4);
+        ctx.lineTo(16, 10);
+        ctx.moveTo(14, 2);
+        ctx.lineTo(22, 8);
+        ctx.stroke();
+        break;
+      }
+
+      case 'RELAY_5V':
+      case 'RELAY_12V': {
+        ctx.strokeRect(10, 6, 44, 44);
+        ctx.beginPath();
+        ctx.moveTo(0, 14);
+        ctx.lineTo(10, 14);
+        ctx.moveTo(0, 42);
+        ctx.lineTo(10, 42);
+        ctx.moveTo(54, 28);
+        ctx.lineTo(64, 28);
+        ctx.moveTo(54, 12);
+        ctx.lineTo(64, 12);
+        ctx.moveTo(54, 44);
+        ctx.lineTo(64, 44);
+        ctx.moveTo(32, 28);
+        ctx.lineTo(48, comp.energized ? 44 : 12);
+        ctx.stroke();
+        break;
+      }
+
+      case 'SWITCH_SPST': {
+        ctx.beginPath();
+        ctx.moveTo(0, 16);
+        ctx.lineTo(14, 16);
+        ctx.moveTo(34, 16);
+        ctx.lineTo(48, 16);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(14, 16, 2.5, 0, Math.PI * 2);
+        ctx.arc(34, 16, 2.5, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(14, 16);
+        ctx.lineTo(comp.isOpen ? 32 : 34, comp.isOpen ? 4 : 16);
+        ctx.stroke();
         break;
       }
 
@@ -892,18 +949,16 @@ export class SchematicRenderer {
         break;
       }
 
-      case 'FUSE': {
-        ctx.strokeRect(10, 6, 32, 12);
-        ctx.beginPath();
-        ctx.moveTo(0, 12);
-        ctx.lineTo(10, 12);
-        ctx.moveTo(42, 12);
-        ctx.lineTo(52, 12);
-        if (!comp.isBlown) {
-          ctx.moveTo(10, 12);
-          ctx.quadraticCurveTo(26, 16, 42, 12);
-        }
-        ctx.stroke();
+      case 'DCD_HEX': {
+        ctx.strokeRect(8, 4, 40, 56);
+        ctx.save();
+        ctx.fillStyle = '#ef4444';
+        ctx.shadowColor = '#ef4444';
+        ctx.shadowBlur = 8;
+        ctx.font = 'bold 32px "Courier New", monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(comp.displayedChar || '0', 28, 44);
+        ctx.restore();
         break;
       }
 
@@ -925,30 +980,6 @@ export class SchematicRenderer {
         break;
       }
 
-      case 'LOGIC_PROBE': {
-        const v = comp.pins[0]?.voltage ?? 0;
-        let color = '#64748b';
-        let text = '?';
-        if (v > 2.0) {
-          color = '#ef4444';
-          text = 'H';
-        } else if (v < 0.8) {
-          color = '#22c55e';
-          text = 'L';
-        }
-        ctx.save();
-        ctx.fillStyle = color;
-        ctx.beginPath();
-        ctx.arc(18, 18, 12, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 11px monospace';
-        ctx.textAlign = 'center';
-        ctx.fillText(text, 18, 22);
-        break;
-      }
-
       default: {
         ctx.strokeRect(6, 6, comp.width - 12, comp.height - 12);
         ctx.font = 'bold 10px sans-serif';
@@ -957,66 +988,32 @@ export class SchematicRenderer {
       }
     }
 
-    // High contrast label text
-    ctx.font = 'bold 10px "Segoe UI", sans-serif';
-    ctx.fillStyle = this.theme === 'light' ? '#0f172a' : '#cbd5e1';
-    if (comp.label) {
-      ctx.fillText(comp.label, 0, -6);
-    }
-
-    // Interactive sliders
-    if (comp.type === 'POTENTIOMETER' || comp.type === 'LDR' || comp.type === 'THERMISTOR_NTC') {
-      this.drawInteractiveSlider(comp);
-    }
-
-    // Draw component pins
+    // Draw component pins in rotated local space
     for (const pin of comp.pins) {
-      this.drawPin(pin);
-    }
-
-    if (comp.smokeEffect && !comp.smokeInitialized) {
-      comp.smokeInitialized = true;
-      this.triggerSmoke(comp.x + comp.width / 2, comp.y + comp.height / 2);
+      ctx.strokeStyle = this.theme === 'light' ? '#0284c7' : '#38bdf8';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(pin.x, pin.y, 2.5, 0, Math.PI * 2);
+      ctx.stroke();
     }
 
     ctx.restore();
-  }
 
-  drawInteractiveSlider(comp) {
-    const ctx = this.ctx;
-    const w = comp.width;
-    const y = comp.height + 4;
-    ctx.strokeStyle = this.theme === 'light' ? '#cbd5e1' : '#475569';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.moveTo(4, y);
-    ctx.lineTo(w - 4, y);
-    ctx.stroke();
-
-    let frac = 0.5;
-    if (comp.type === 'POTENTIOMETER') frac = comp.sliderValue ?? 0.5;
-    if (comp.type === 'LDR') frac = (comp.lux ?? 400) / 1000;
-    if (comp.type === 'THERMISTOR_NTC') frac = ((comp.temperature ?? 25) + 10) / 100;
-
-    const knobX = 4 + frac * (w - 8);
-    ctx.fillStyle = this.theme === 'light' ? '#0284c7' : '#38bdf8';
-    ctx.beginPath();
-    ctx.arc(knobX, y, 5, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  drawPin(pin) {
-    const ctx = this.ctx;
-    ctx.strokeStyle = this.theme === 'light' ? '#0284c7' : '#38bdf8';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.arc(pin.x, pin.y, 2.5, 0, Math.PI * 2);
-    ctx.stroke();
+    // Draw component label upright above component in world coordinates
+    ctx.save();
+    ctx.font = 'bold 10px "Segoe UI", sans-serif';
+    ctx.fillStyle = this.theme === 'light' ? '#0f172a' : '#cbd5e1';
+    const textLabel = comp.label || comp.partNumber || comp.name;
+    if (textLabel) {
+      ctx.fillText(textLabel, comp.x, comp.y - 6);
+    }
+    ctx.restore();
   }
 
   drawPinSnap(pinInfo) {
     const ctx = this.ctx;
-    const pos = this.worldToScreen(pinInfo.comp.x + pinInfo.pin.x, pinInfo.comp.y + pinInfo.pin.y);
+    const wpos = this.getPinWorldPos(pinInfo.comp, pinInfo.pin);
+    const pos = this.worldToScreen(wpos.x, wpos.y);
     ctx.save();
     ctx.strokeStyle = '#0284c7';
     ctx.lineWidth = 2.5;
@@ -1024,6 +1021,32 @@ export class SchematicRenderer {
     ctx.arc(pos.x, pos.y, 7, 0, Math.PI * 2);
     ctx.stroke();
     ctx.restore();
+  }
+
+  findPinAt(wx, wy) {
+    for (const comp of this.solver.components) {
+      for (let pIdx = 0; pIdx < comp.pins.length; pIdx++) {
+        const pin = comp.pins[pIdx];
+        const wpos = this.getPinWorldPos(comp, pin);
+        if (Math.hypot(wx - wpos.x, wy - wpos.y) < 14) {
+          return { comp, pin, pIdx };
+        }
+      }
+    }
+    return null;
+  }
+
+  findComponentAt(wx, wy) {
+    for (let i = this.solver.components.length - 1; i >= 0; i--) {
+      const comp = this.solver.components[i];
+      const cx = comp.x + comp.width / 2;
+      const cy = comp.y + comp.height / 2;
+      const maxDim = Math.max(comp.width, comp.height) / 2 + 8;
+      if (Math.hypot(wx - cx, wy - cy) <= maxDim) {
+        return comp;
+      }
+    }
+    return null;
   }
 
   triggerSmoke(x, y) {
@@ -1063,33 +1086,6 @@ export class SchematicRenderer {
     }
   }
 
-  findPinAt(wx, wy) {
-    for (const comp of this.solver.components) {
-      for (let pIdx = 0; pIdx < comp.pins.length; pIdx++) {
-        const pin = comp.pins[pIdx];
-        const px = comp.x + pin.x;
-        const py = comp.y + pin.y;
-        if (Math.hypot(wx - px, wy - py) < 12) {
-          return { comp, pin, pIdx };
-        }
-      }
-    }
-    return null;
-  }
-
-  findComponentAt(wx, wy) {
-    for (let i = this.solver.components.length - 1; i >= 0; i--) {
-      const comp = this.solver.components[i];
-      const w = comp.width || 48;
-      const h = comp.height || 36;
-      if (wx >= comp.x && wx <= comp.x + w && wy >= comp.y && wy <= comp.y + h) {
-        return comp;
-      }
-    }
-    return null;
-  }
-
-  // Export high-resolution PNG image of the schematic
   exportAsImage() {
     const offCanvas = document.createElement('canvas');
     offCanvas.width = this.canvas.width * 2;
@@ -1097,16 +1093,13 @@ export class SchematicRenderer {
     const offCtx = offCanvas.getContext('2d');
 
     offCtx.scale(2, 2);
-    // Draw white or dark background
     offCtx.fillStyle = this.theme === 'light' ? '#ffffff' : '#090e17';
     offCtx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-    // Save and render schematic onto offscreen canvas
     offCtx.save();
     offCtx.translate(this.panX, this.panY);
     offCtx.scale(this.zoom, this.zoom);
 
-    // Grid dots
     const oldCtx = this.ctx;
     this.ctx = offCtx;
     this.drawGrid(this.canvas.width, this.canvas.height);
@@ -1117,7 +1110,6 @@ export class SchematicRenderer {
     this.ctx = oldCtx;
     offCtx.restore();
 
-    // Trigger download
     const dataUrl = offCanvas.toDataURL('image/png');
     const a = document.createElement('a');
     a.href = dataUrl;

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Multisim Web - Interactive Electronics Circuit Simulator</title>
+  <title>Multisim Web Studio - Academic & Professional Electronic Circuit Lab</title>
   <link rel="stylesheet" href="css/main.css">
 </head>
 <body>
@@ -15,8 +15,8 @@
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
         </svg>
-        <span>NI MULTISIM</span>
-        <span class="brand-badge">WEB PRO</span>
+        <span>MULTISIM WEB STUDIO</span>
+        <span class="brand-badge">ACADEMIC & PRO LAB</span>
       </div>
       <div style="font-size: 11px; color: #94a3b8;">
         Interactive SPICE & MNA Circuit Simulation Engine
@@ -24,40 +24,37 @@
     </div>
 
     <div class="ribbon-controls">
-      <!-- File Operations -->
+      <!-- 1. File Group -->
       <div class="ribbon-group">
-        <button id="btnNew" class="ribbon-btn" title="New Blank Circuit">
+        <button id="btnNew" class="ribbon-btn" title="Create New Blank Circuit">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
           New
         </button>
-        <button id="btnOpen" class="ribbon-btn" title="Open / Upload Circuit (.ms14, .json)">
+        <button id="btnOpen" class="ribbon-btn" title="Open Circuit File (.ms14, .json)">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
           Open
         </button>
-        <input type="file" id="fileInput" accept=".json,.ms14,.msm,.cir" style="display: none;">
+        <input type="file" id="fileInput" accept=".json,.ms14,.msm" style="display: none;">
         
-        <button id="btnSave" class="ribbon-btn" title="Save Circuit (.ms14 / .json)">
+        <button id="btnSave" class="ribbon-btn" title="Save Circuit File (.ms14)">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
           Save .ms14
         </button>
+      </div>
 
-        <button id="btnExportImage" class="ribbon-btn btn-export" title="Download High-Resolution PNG Schematic Image">
+      <!-- 2. Separate Download & Export Group -->
+      <div class="ribbon-group">
+        <button id="btnExportImage" class="ribbon-btn btn-export" title="Download High-Resolution PNG Image of Schematic">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-          Export PNG
+          Download Image (PNG)
         </button>
-
-        <button id="btnExportNetlist" class="ribbon-btn" title="Export SPICE Netlist (.cir)">
+        <button id="btnExportNetlist" class="ribbon-btn" title="Download Standard SPICE Netlist (.cir)">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
-          SPICE .cir
-        </button>
-
-        <button id="btnTemplates" class="ribbon-btn" title="Template Circuits Library">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-          Templates
+          Download SPICE (.cir)
         </button>
       </div>
 
-      <!-- Simulation Controls -->
+      <!-- 3. Simulation Controls -->
       <div class="ribbon-group">
         <button id="btnRun" class="ribbon-btn sim-run running" title="Run / Resume Simulation (F5)">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
@@ -77,7 +74,7 @@
         </button>
       </div>
 
-      <!-- Editing Tools -->
+      <!-- 4. Schematic Tools -->
       <div class="ribbon-group">
         <button id="toolSelect" class="ribbon-btn active" title="Select / Move Tool (Esc)">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l7 18 3-7 7-3L3 3z"></path></svg>
@@ -87,17 +84,24 @@
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="5" r="3"></circle><circle cx="19" cy="19" r="3"></circle><line x1="5" y1="8" x2="5" y2="12"></line><line x1="5" y1="12" x2="19" y2="12"></line><line x1="19" y1="12" x2="19" y2="16"></line></svg>
           Wire
         </button>
+        <button id="toolProbe" class="ribbon-btn" title="Oscilloscope Voltage Probe (Click on any pin or wire to plot on Graph)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+          Probe Tool
+        </button>
         <button id="btnRotate" class="ribbon-btn" title="Rotate Selected Component 90° (R)">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
-          Rotate
+          Rotate 90°
         </button>
         <button id="btnDelete" class="ribbon-btn" title="Delete Selected Item (Del)">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
           Delete
         </button>
+        <button id="btnClear" class="ribbon-btn" title="Clear Canvas">
+          Clear
+        </button>
       </div>
 
-      <!-- Visual Options & Theme -->
+      <!-- 5. View & Theme Group -->
       <div class="ribbon-group">
         <button id="btnToggleCurrent" class="ribbon-btn active" title="Toggle Animated Current Charges">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line></svg>
@@ -117,7 +121,7 @@
     <!-- Left Component Catalog Sidebar -->
     <aside class="component-sidebar">
       <div class="sidebar-search-box">
-        <input type="text" id="componentSearch" class="search-input" placeholder="Search 100+ components (e.g. 555, 7408, 1N4007)...">
+        <input type="text" id="componentSearch" class="search-input" placeholder="Search components (e.g. BC547, LM358, 2.3k, 1N4007)...">
       </div>
       <div class="category-tabs" id="catalogContainer">
         <!-- Rendered dynamically from COMPONENT_CATALOG -->
@@ -145,12 +149,12 @@
     <!-- Right Instruments Drawer -->
     <aside class="instruments-drawer">
       <div class="drawer-tabs">
-        <button class="tab-btn active" data-tab="oscilloscope">Oscilloscope</button>
-        <button class="tab-btn" data-tab="multimeter">Multimeter</button>
-        <button class="tab-btn" data-tab="inspector">Properties</button>
+        <button class="tab-btn active" data-tab="oscilloscope">Graph / Oscilloscope</button>
+        <button class="tab-btn" data-tab="multimeter">Digital Multimeter</button>
+        <button class="tab-btn" data-tab="inspector">Component Properties</button>
       </div>
 
-      <!-- Tab Content: Oscilloscope -->
+      <!-- Tab Content: Oscilloscope / Graph -->
       <div class="drawer-content" id="tabContentOscilloscope">
         <div class="scope-screen-wrapper">
           <canvas id="scopeCanvas" width="350" height="200"></canvas>
@@ -201,7 +205,7 @@
 
           <!-- Channel A -->
           <div class="scope-control-card" style="border-left: 3px solid #38bdf8;">
-            <div class="control-label" style="color: #38bdf8;">CH A (Blue)</div>
+            <div class="control-label" style="color: #38bdf8;">CH A (Cyan)</div>
             <div class="control-row">
               <span>Volts/Div</span>
               <select id="scopeVoltsChA" class="scope-select">
@@ -215,7 +219,7 @@
               </select>
             </div>
             <div class="control-row">
-              <span>Probe</span>
+              <span>Probe Node</span>
               <select id="scopeProbeChA" class="scope-select">
                 <option value="">(None)</option>
               </select>
@@ -238,7 +242,7 @@
               </select>
             </div>
             <div class="control-row">
-              <span>Probe</span>
+              <span>Probe Node</span>
               <select id="scopeProbeChB" class="scope-select">
                 <option value="">(None)</option>
               </select>
@@ -286,24 +290,11 @@
       <div class="drawer-content" id="tabContentInspector" style="display: none;">
         <div id="inspectorContent">
           <div style="color: var(--text-muted); font-size: 12px; text-align: center; margin-top: 40px;">
-            Select any component on the schematic canvas to inspect and edit its electrical parameters.
+            Select or double-click any component on the schematic canvas to inspect and edit its value.
           </div>
         </div>
       </div>
     </aside>
-  </div>
-
-  <!-- Modal Template Circuits Picker -->
-  <div class="modal-overlay" id="templatesModal" style="display: none;">
-    <div class="modal-dialog">
-      <div class="modal-header">
-        <span class="modal-title">Circuit Templates Library</span>
-        <button class="modal-close-btn" id="modalCloseBtn">&times;</button>
-      </div>
-      <div class="modal-body" id="templatesList">
-        <!-- Rendered dynamically -->
-      </div>
-    </div>
   </div>
 
   <!-- Bottom Status Bar -->
@@ -315,7 +306,7 @@
       </div>
       <div>Sim Time: <span id="simTimeLabel">0.0 ms</span></div>
       <div>Timestep: 100 µs</div>
-      <div>Solver: MNA Newton-Raphson</div>
+      <div>Engine: MNA Real-Time</div>
     </div>
     <div class="status-group">
       <div id="activeNodesLabel">Nodes: 0</div>
