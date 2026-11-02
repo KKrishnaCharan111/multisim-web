@@ -1,6 +1,7 @@
 /**
  * Multisim Web - Main Application Controller
- * Orchestrates circuit simulation, interactive canvas wiring, instruments, and UI.
+ * Handles schematic interactions, circuit file save/load, high-res image export,
+ * SPICE netlist export, real-time MNA simulation, and instruments.
  */
 
 import { MNACircuitSolver } from './engine/mna-solver.js';
@@ -20,7 +21,7 @@ class MultisimApp {
     this.oscilloscope = new Oscilloscope(this.scopeCanvas, this.solver);
     this.multimeter = new DigitalMultimeter(this.solver);
 
-    this.currentMode = 'select'; // 'select' or 'wire'
+    this.currentMode = 'select';
     this.nextNetId = 1;
     this.isDraggingComp = false;
     this.dragStartPos = { x: 0, y: 0 };
@@ -37,8 +38,9 @@ class MultisimApp {
     this.initInstruments();
     this.resizeCanvas();
 
-    // Load initial default sample circuit (555 Timer Astable LED Flasher)
-    this.loadSampleCircuit('sample_555_flasher');
+    // Start with a clean, blank canvas
+    this.solver.setComponents([]);
+    this.updateProbeDropdowns();
 
     // Start simulation & render loop
     this.solver.isRunning = true;
@@ -55,25 +57,81 @@ class MultisimApp {
   initUI() {
     window.addEventListener('resize', () => this.resizeCanvas());
 
-    // Populate Component Catalog Sidebar
     this.renderCatalog();
 
-    // Populate Sample Circuits Dropdown
-    const sampleSelect = document.getElementById('sampleCircuitSelect');
-    SAMPLE_CIRCUITS.forEach(s => {
-      const opt = document.createElement('option');
-      opt.value = s.id;
-      opt.textContent = s.name;
-      sampleSelect.appendChild(opt);
-    });
-    sampleSelect.value = 'sample_555_flasher';
-    sampleSelect.addEventListener('change', (e) => {
-      if (e.target.value) {
-        this.loadSampleCircuit(e.target.value);
+    // File Management
+    const btnNew = document.getElementById('btnNew');
+    const btnOpen = document.getElementById('btnOpen');
+    const fileInput = document.getElementById('fileInput');
+    const btnSave = document.getElementById('btnSave');
+    const btnExportImage = document.getElementById('btnExportImage');
+    const btnExportNetlist = document.getElementById('btnExportNetlist');
+    const btnTemplates = document.getElementById('btnTemplates');
+    const templatesModal = document.getElementById('templatesModal');
+    const modalCloseBtn = document.getElementById('modalCloseBtn');
+
+    btnNew.addEventListener('click', () => {
+      if (this.solver.components.length === 0 || confirm('Create new blank circuit? Current unsaved work will be cleared.')) {
+        this.solver.setComponents([]);
+        this.renderer.selectedComponent = null;
+        this.updateInspector(null);
+        this.updateProbeDropdowns();
+        this.renderer.render();
       }
     });
 
-    // Simulation Ribbon Buttons
+    btnOpen.addEventListener('click', () => {
+      fileInput.click();
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const comps = JSON.parse(event.target.result);
+          if (Array.isArray(comps)) {
+            this.solver.setComponents(comps);
+            this.updateProbeDropdowns();
+            this.updateInspector(null);
+            this.renderer.render();
+          } else {
+            alert('Invalid circuit file format.');
+          }
+        } catch (err) {
+          alert('Error parsing circuit file: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+      fileInput.value = '';
+    });
+
+    btnSave.addEventListener('click', () => {
+      this.downloadCircuitFile();
+    });
+
+    btnExportImage.addEventListener('click', () => {
+      this.renderer.exportAsImage();
+    });
+
+    btnExportNetlist.addEventListener('click', () => {
+      this.downloadSpiceNetlist();
+    });
+
+    // Templates Modal
+    this.renderTemplatesModal();
+    btnTemplates.addEventListener('click', () => {
+      templatesModal.style.display = 'flex';
+    });
+    modalCloseBtn.addEventListener('click', () => {
+      templatesModal.style.display = 'none';
+    });
+    templatesModal.addEventListener('click', (e) => {
+      if (e.target === templatesModal) templatesModal.style.display = 'none';
+    });
+
+    // Simulation Buttons
     const btnRun = document.getElementById('btnRun');
     const btnPause = document.getElementById('btnPause');
     const btnStep = document.getElementById('btnStep');
@@ -85,7 +143,6 @@ class MultisimApp {
       document.getElementById('simStatusLight').classList.add('active');
       document.getElementById('simStatusText').textContent = 'Simulation Running';
     });
-    btnRun.classList.add('running');
 
     btnPause.addEventListener('click', () => {
       this.solver.isRunning = false;
@@ -124,38 +181,24 @@ class MultisimApp {
 
     document.getElementById('btnRotate').addEventListener('click', () => this.rotateSelected());
     document.getElementById('btnDelete').addEventListener('click', () => this.deleteSelected());
-    document.getElementById('btnClear').addEventListener('click', () => {
-      if (confirm('Clear entire schematic?')) {
-        this.solver.setComponents([]);
-        this.renderer.selectedComponent = null;
-        this.updateInspector(null);
-        this.updateProbeDropdowns();
-      }
-    });
 
-    // Visual options
-    const btnToggleCurrent = document.getElementById('btnToggleCurrent');
-    btnToggleCurrent.addEventListener('click', () => {
-      this.renderer.showCurrentFlow = !this.renderer.showCurrentFlow;
-      btnToggleCurrent.classList.toggle('active', this.renderer.showCurrentFlow);
-    });
-
+    // Theme Toggle
     const btnToggleTheme = document.getElementById('btnToggleTheme');
+    const themeBtnText = document.getElementById('themeBtnText');
     btnToggleTheme.addEventListener('click', () => {
       const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
       const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
       document.documentElement.setAttribute('data-theme', newTheme);
+      themeBtnText.textContent = newTheme === 'dark' ? 'Light Theme' : 'Dark Theme';
       this.renderer.setTheme(newTheme);
+      this.renderer.render();
     });
 
-    document.getElementById('btnExportJson').addEventListener('click', () => {
-      const json = JSON.stringify(this.solver.components, null, 2);
-      const blob = new Blob([json], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'multisim_circuit.json';
-      a.click();
+    // Animated Current Flow Toggle
+    const btnToggleCurrent = document.getElementById('btnToggleCurrent');
+    btnToggleCurrent.addEventListener('click', () => {
+      this.renderer.showCurrentFlow = !this.renderer.showCurrentFlow;
+      btnToggleCurrent.classList.toggle('active', this.renderer.showCurrentFlow);
     });
 
     // Search filter
@@ -176,7 +219,7 @@ class MultisimApp {
       });
     });
 
-    // Floating Zoom Controls
+    // Zoom Controls
     document.getElementById('btnZoomIn').addEventListener('click', () => {
       this.renderer.zoom = Math.min(2.5, this.renderer.zoom * 1.2);
     });
@@ -185,11 +228,11 @@ class MultisimApp {
     });
     document.getElementById('btnZoomFit').addEventListener('click', () => {
       this.renderer.zoom = 1.0;
-      this.renderer.panX = 40;
-      this.renderer.panY = 40;
+      this.renderer.panX = 60;
+      this.renderer.panY = 60;
     });
 
-    // Keyboard Shortcuts
+    // Shortcuts
     window.addEventListener('keydown', (e) => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
       if (e.key === 'r' || e.key === 'R') this.rotateSelected();
@@ -198,6 +241,71 @@ class MultisimApp {
       if (e.key === 'Escape') toolSelect.click();
       if (e.key === 'F5') { e.preventDefault(); btnRun.click(); }
     });
+  }
+
+  renderTemplatesModal() {
+    const list = document.getElementById('templatesList');
+    list.innerHTML = '';
+
+    SAMPLE_CIRCUITS.forEach(sample => {
+      const card = document.createElement('div');
+      card.className = 'template-card';
+      card.innerHTML = `
+        <div class="template-name">${sample.name}</div>
+        <div class="template-desc">${sample.description}</div>
+      `;
+      card.addEventListener('click', () => {
+        this.loadSampleCircuit(sample.id);
+        document.getElementById('templatesModal').style.display = 'none';
+      });
+      list.appendChild(card);
+    });
+  }
+
+  downloadCircuitFile() {
+    const data = JSON.stringify(this.solver.components, null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `multisim_circuit_${Date.now()}.ms14`;
+    a.click();
+  }
+
+  downloadSpiceNetlist() {
+    let netlist = `* NI MULTISIM WEB SPICE NETLIST EXPORT\n* Generated: ${new Date().toISOString()}\n\n`;
+    this.solver.components.forEach((c, idx) => {
+      const p1 = c.pins[0]?.netId || '0';
+      const p2 = c.pins[1]?.netId || '0';
+      switch (c.type) {
+        case 'RESISTOR':
+          netlist += `R${idx + 1} ${p1} ${p2} ${c.resistance || 1000}\n`;
+          break;
+        case 'CAPACITOR':
+          netlist += `C${idx + 1} ${p1} ${p2} ${c.capacitance || 1e-6}\n`;
+          break;
+        case 'INDUCTOR':
+          netlist += `L${idx + 1} ${p1} ${p2} ${c.inductance || 1e-3}\n`;
+          break;
+        case 'DC_POWER':
+          netlist += `V${idx + 1} ${p1} ${p2} DC ${c.voltage || 5}\n`;
+          break;
+        case 'DIODE_1N4007':
+          netlist += `D${idx + 1} ${p1} ${p2} 1N4007\n`;
+          break;
+        default:
+          netlist += `* ${c.type} ${c.label || ''} [${c.pins.map(p => p.netId || 'NC').join(' ')}]\n`;
+          break;
+      }
+    });
+    netlist += '\n.tran 100u 100m\n.end\n';
+
+    const blob = new Blob([netlist], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `circuit_netlist_${Date.now()}.cir`;
+    a.click();
   }
 
   renderCatalog() {
@@ -244,8 +352,8 @@ class MultisimApp {
   }
 
   placeNewComponent(def) {
-    const wx = this.renderer.snapToGrid(-this.renderer.panX / this.renderer.zoom + 200);
-    const wy = this.renderer.snapToGrid(-this.renderer.panY / this.renderer.zoom + 160);
+    const wx = this.renderer.snapToGrid(-this.renderer.panX / this.renderer.zoom + 220);
+    const wy = this.renderer.snapToGrid(-this.renderer.panY / this.renderer.zoom + 180);
 
     const comp = {
       id: `comp_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
@@ -261,7 +369,6 @@ class MultisimApp {
       ...JSON.parse(JSON.stringify(def.defaultProps || {}))
     };
 
-    // If ground, attach to GND net
     if (comp.type === 'GROUND' || comp.type === 'DIGITAL_GROUND') {
       comp.pins[0].netId = 'GND';
     }
@@ -276,7 +383,6 @@ class MultisimApp {
   rotateSelected() {
     const comp = this.renderer.selectedComponent;
     if (!comp) return;
-    // Swap pin coordinates 90 degrees around center
     const cx = comp.width / 2;
     const cy = comp.height / 2;
     for (const pin of comp.pins) {
@@ -313,22 +419,18 @@ class MultisimApp {
       const sy = e.clientY - rect.top;
       const wpos = this.renderer.screenToWorld(sx, sy);
 
-      // Middle click or Space+Click: Pan
       if (e.button === 1 || e.shiftKey) {
         this.isPanning = true;
         this.panStart = { x: sx - this.renderer.panX, y: sy - this.renderer.panY };
         return;
       }
 
-      // Check pin hit
       const pinInfo = this.renderer.findPinAt(wpos.x, wpos.y);
       if (pinInfo) {
         if (!this.renderer.isWiring) {
-          // Start wiring
           this.renderer.isWiring = true;
           this.renderer.wireStartPin = pinInfo;
         } else {
-          // Complete wiring: assign common netId
           this.connectPins(this.renderer.wireStartPin, pinInfo);
           this.renderer.isWiring = false;
           this.renderer.wireStartPin = null;
@@ -336,26 +438,22 @@ class MultisimApp {
         return;
       }
 
-      // If clicked while wiring in empty space: cancel or anchor
       if (this.renderer.isWiring) {
         this.renderer.isWiring = false;
         this.renderer.wireStartPin = null;
         return;
       }
 
-      // Check component hit
       const comp = this.renderer.findComponentAt(wpos.x, wpos.y);
       if (comp) {
-        // Interactive switch toggle on click
         if (comp.type === 'SWITCH_SPST' || comp.type === 'PUSH_BUTTON_NO' || comp.type === 'PUSH_BUTTON_NC') {
           comp.isOpen = !comp.isOpen;
         } else if (comp.type === 'SWITCH_SPDT') {
           comp.isPosA = !comp.isPosA;
         }
 
-        // Potentiometer / sensor slider check
         if ((comp.type === 'POTENTIOMETER' || comp.type === 'LDR' || comp.type === 'THERMISTOR_NTC') &&
-            wpos.y > comp.y + comp.height - 2) {
+            wpos.y > comp.y + comp.height - 4) {
           const frac = Math.max(0.01, Math.min(0.99, (wpos.x - comp.x) / comp.width));
           if (comp.type === 'POTENTIOMETER') comp.sliderValue = frac;
           if (comp.type === 'LDR') comp.lux = Math.round(frac * 1000);
@@ -370,7 +468,6 @@ class MultisimApp {
       } else {
         this.renderer.selectedComponent = null;
         this.updateInspector(null);
-        // Start canvas pan
         this.isPanning = true;
         this.panStart = { x: sx - this.renderer.panX, y: sy - this.renderer.panY };
       }
@@ -398,7 +495,6 @@ class MultisimApp {
         return;
       }
 
-      // Check hovered pin for visual snap ring
       this.renderer.hoveredPin = this.renderer.findPinAt(wpos.x, wpos.y);
     });
 
@@ -423,7 +519,6 @@ class MultisimApp {
       targetNet = `NET_${this.nextNetId++}`;
     }
 
-    // Propagate to all connected pins
     const oldNet = pinInfo2.pin.netId;
     pinInfo1.pin.netId = targetNet;
     pinInfo2.pin.netId = targetNet;
@@ -488,7 +583,6 @@ class MultisimApp {
 
     container.innerHTML = rows;
 
-    // Attach edit listeners
     const propLabel = document.getElementById('propLabel');
     if (propLabel) propLabel.addEventListener('input', (e) => { comp.label = e.target.value; });
 
@@ -541,7 +635,6 @@ class MultisimApp {
   }
 
   initInstruments() {
-    // Oscilloscope inputs
     document.getElementById('scopeTimebase').addEventListener('change', (e) => {
       this.oscilloscope.timePerDiv = parseFloat(e.target.value);
     });
@@ -577,7 +670,6 @@ class MultisimApp {
       }
     });
 
-    // Multimeter mode buttons
     document.querySelectorAll('.dmm-mode-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.dmm-mode-btn').forEach(b => b.classList.remove('active'));
@@ -596,12 +688,10 @@ class MultisimApp {
     const sample = SAMPLE_CIRCUITS.find(s => s.id === sampleId);
     if (!sample) return;
 
-    // Deep clone components
     const clonedComps = JSON.parse(JSON.stringify(sample.components));
     this.solver.setComponents(clonedComps);
     this.renderer.selectedComponent = null;
 
-    // Apply oscilloscope setup if provided
     if (sample.oscilloscopeSetup) {
       const os = sample.oscilloscopeSetup;
       if (os.chA) {
@@ -627,31 +717,23 @@ class MultisimApp {
 
   startSimulationLoop() {
     const loop = () => {
-      // Run multiple physics sub-steps per animation frame for numerical accuracy
       if (this.solver.isRunning) {
-        const subSteps = 20; // 20 * 100µs = 2ms simulation progress per 16ms display frame
-        for (let i = 0; i < subSteps; i++) {
+        for (let i = 0; i < 20; i++) {
           this.solver.step(this.solver.dt);
         }
       }
 
-      // Render schematic canvas
       this.renderer.render();
-
-      // Render Oscilloscope
       this.oscilloscope.render();
-
-      // Update Multimeter display
       this.multimeter.update();
+
       const dmmEl = document.getElementById('dmmDisplay');
       if (dmmEl) dmmEl.textContent = this.multimeter.displayValue;
 
-      // Update Status Bar
       const simTimeMs = (this.solver.time * 1000).toFixed(1);
       document.getElementById('simTimeLabel').textContent = `${simTimeMs} ms`;
       document.getElementById('activeNodesLabel').textContent = `Nodes: ${this.solver.numNodes || 0}`;
 
-      // FPS Calculation
       this.fpsCounter++;
       const now = performance.now();
       if (now - this.lastFpsTime >= 1000) {
@@ -668,7 +750,6 @@ class MultisimApp {
   }
 }
 
-// Instantiate on DOM load
 window.addEventListener('DOMContentLoaded', () => {
   window.multisim = new MultisimApp();
 });

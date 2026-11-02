@@ -18,15 +18,48 @@
         <span>NI MULTISIM</span>
         <span class="brand-badge">WEB PRO</span>
       </div>
-      <div style="font-size: 11px; color: var(--text-muted);">
+      <div style="font-size: 11px; color: #94a3b8;">
         Interactive SPICE & MNA Circuit Simulation Engine
       </div>
     </div>
 
     <div class="ribbon-controls">
+      <!-- File Operations -->
+      <div class="ribbon-group">
+        <button id="btnNew" class="ribbon-btn" title="New Blank Circuit">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+          New
+        </button>
+        <button id="btnOpen" class="ribbon-btn" title="Open / Upload Circuit (.ms14, .json)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+          Open
+        </button>
+        <input type="file" id="fileInput" accept=".json,.ms14,.msm,.cir" style="display: none;">
+        
+        <button id="btnSave" class="ribbon-btn" title="Save Circuit (.ms14 / .json)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+          Save .ms14
+        </button>
+
+        <button id="btnExportImage" class="ribbon-btn btn-export" title="Download High-Resolution PNG Schematic Image">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+          Export PNG
+        </button>
+
+        <button id="btnExportNetlist" class="ribbon-btn" title="Export SPICE Netlist (.cir)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+          SPICE .cir
+        </button>
+
+        <button id="btnTemplates" class="ribbon-btn" title="Template Circuits Library">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+          Templates
+        </button>
+      </div>
+
       <!-- Simulation Controls -->
       <div class="ribbon-group">
-        <button id="btnRun" class="ribbon-btn sim-run" title="Run / Resume Simulation (F5)">
+        <button id="btnRun" class="ribbon-btn sim-run running" title="Run / Resume Simulation (F5)">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
           Run
         </button>
@@ -62,30 +95,17 @@
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
           Delete
         </button>
-        <button id="btnClear" class="ribbon-btn" title="Clear Canvas">
-          Clear
-        </button>
       </div>
 
-      <!-- Sample Circuits Dropdown -->
-      <div class="ribbon-group">
-        <label style="font-size: 11px; color: var(--text-secondary); margin-right: 4px;">Examples:</label>
-        <select id="sampleCircuitSelect" class="ribbon-select">
-          <option value="">-- Choose Sample Circuit --</option>
-        </select>
-      </div>
-
-      <!-- Visual & Display Options -->
+      <!-- Visual Options & Theme -->
       <div class="ribbon-group">
         <button id="btnToggleCurrent" class="ribbon-btn active" title="Toggle Animated Current Charges">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#facc15" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line></svg>
           Current Flow
         </button>
-        <button id="btnToggleTheme" class="ribbon-btn" title="Toggle Dark / Classic Multisim Light Theme">
-          Theme
-        </button>
-        <button id="btnExportJson" class="ribbon-btn" title="Export Circuit JSON">
-          Export
+        <button id="btnToggleTheme" class="ribbon-btn" title="Switch Theme (Classic Light / Modern Dark)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+          <span id="themeBtnText">Light Theme</span>
         </button>
       </div>
     </div>
@@ -271,6 +291,19 @@
         </div>
       </div>
     </aside>
+  </div>
+
+  <!-- Modal Template Circuits Picker -->
+  <div class="modal-overlay" id="templatesModal" style="display: none;">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <span class="modal-title">Circuit Templates Library</span>
+        <button class="modal-close-btn" id="modalCloseBtn">&times;</button>
+      </div>
+      <div class="modal-body" id="templatesList">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
   </div>
 
   <!-- Bottom Status Bar -->
