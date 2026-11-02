@@ -1,0 +1,20 @@
+{
+  "name": "multisim-web",
+  "version": "1.0.0",
+  "description": "Full-featured web replica of NI Multisim with complete electronic component catalog, MNA simulation engine, real-time oscilloscope, multimeter, and interactive animations.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [
+    "multisim",
+    "circuit-simulator",
+    "spice",
+    "electronics",
+    "mna-solver",
+    "oscilloscope",
+    "digital-multimeter"
+  ],
+  "author": "Antigravity",
+  "license": "MIT"
+}

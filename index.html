@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multisim Web - Interactive Electronics Circuit Simulator</title>
+  <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+
+  <!-- Top Ribbon & Navigation -->
+  <header class="multisim-header">
+    <div class="brand-bar">
+      <div class="brand-logo">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+        </svg>
+        <span>NI MULTISIM</span>
+        <span class="brand-badge">WEB PRO</span>
+      </div>
+      <div style="font-size: 11px; color: var(--text-muted);">
+        Interactive SPICE & MNA Circuit Simulation Engine
+      </div>
+    </div>
+
+    <div class="ribbon-controls">
+      <!-- Simulation Controls -->
+      <div class="ribbon-group">
+        <button id="btnRun" class="ribbon-btn sim-run" title="Run / Resume Simulation (F5)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+          Run
+        </button>
+        <button id="btnPause" class="ribbon-btn" title="Pause Simulation">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+          Pause
+        </button>
+        <button id="btnStep" class="ribbon-btn" title="Single Timestep (F10)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="13 17 18 12 13 7"></polyline><polyline points="6 17 11 12 6 7"></polyline></svg>
+          Step
+        </button>
+        <button id="btnStop" class="ribbon-btn sim-stop" title="Reset Circuit">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16"></rect></svg>
+          Stop
+        </button>
+      </div>
+
+      <!-- Editing Tools -->
+      <div class="ribbon-group">
+        <button id="toolSelect" class="ribbon-btn active" title="Select / Move Tool (Esc)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l7 18 3-7 7-3L3 3z"></path></svg>
+          Select
+        </button>
+        <button id="toolWire" class="ribbon-btn" title="Orthogonal Wire Placement (W)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="5" r="3"></circle><circle cx="19" cy="19" r="3"></circle><line x1="5" y1="8" x2="5" y2="12"></line><line x1="5" y1="12" x2="19" y2="12"></line><line x1="19" y1="12" x2="19" y2="16"></line></svg>
+          Wire
+        </button>
+        <button id="btnRotate" class="ribbon-btn" title="Rotate Selected Component 90° (R)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+          Rotate
+        </button>
+        <button id="btnDelete" class="ribbon-btn" title="Delete Selected Item (Del)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+          Delete
+        </button>
+        <button id="btnClear" class="ribbon-btn" title="Clear Canvas">
+          Clear
+        </button>
+      </div>
+
+      <!-- Sample Circuits Dropdown -->
+      <div class="ribbon-group">
+        <label style="font-size: 11px; color: var(--text-secondary); margin-right: 4px;">Examples:</label>
+        <select id="sampleCircuitSelect" class="ribbon-select">
+          <option value="">-- Choose Sample Circuit --</option>
+        </select>
+      </div>
+
+      <!-- Visual & Display Options -->
+      <div class="ribbon-group">
+        <button id="btnToggleCurrent" class="ribbon-btn active" title="Toggle Animated Current Charges">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#facc15" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line></svg>
+          Current Flow
+        </button>
+        <button id="btnToggleTheme" class="ribbon-btn" title="Toggle Dark / Classic Multisim Light Theme">
+          Theme
+        </button>
+        <button id="btnExportJson" class="ribbon-btn" title="Export Circuit JSON">
+          Export
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Workspace Container -->
+  <div class="multisim-workspace">
+    
+    <!-- Left Component Catalog Sidebar -->
+    <aside class="component-sidebar">
+      <div class="sidebar-search-box">
+        <input type="text" id="componentSearch" class="search-input" placeholder="Search 100+ components (e.g. 555, 7408, 1N4007)...">
+      </div>
+      <div class="category-tabs" id="catalogContainer">
+        <!-- Rendered dynamically from COMPONENT_CATALOG -->
+      </div>
+    </aside>
+
+    <!-- Center Canvas Area -->
+    <main class="schematic-viewport" id="viewport">
+      <canvas id="schematicCanvas"></canvas>
+
+      <!-- Floating Zoom Controls -->
+      <div class="canvas-floating-controls">
+        <button class="float-btn" id="btnZoomIn" title="Zoom In (+)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+        </button>
+        <button class="float-btn" id="btnZoomOut" title="Zoom Out (-)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+        </button>
+        <button class="float-btn" id="btnZoomFit" title="Fit to Screen (0)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6"></path><path d="M9 21H3v-6"></path><path d="M21 3l-7 7"></path><path d="M3 21l7-7"></path></svg>
+        </button>
+      </div>
+    </main>
+
+    <!-- Right Instruments Drawer -->
+    <aside class="instruments-drawer">
+      <div class="drawer-tabs">
+        <button class="tab-btn active" data-tab="oscilloscope">Oscilloscope</button>
+        <button class="tab-btn" data-tab="multimeter">Multimeter</button>
+        <button class="tab-btn" data-tab="inspector">Properties</button>
+      </div>
+
+      <!-- Tab Content: Oscilloscope -->
+      <div class="drawer-content" id="tabContentOscilloscope">
+        <div class="scope-screen-wrapper">
+          <canvas id="scopeCanvas" width="350" height="200"></canvas>
+        </div>
+
+        <div class="scope-controls-grid">
+          <!-- Timebase -->
+          <div class="scope-control-card">
+            <div class="control-label">Timebase</div>
+            <div class="control-row">
+              <span>Sec/Div</span>
+              <select id="scopeTimebase" class="scope-select">
+                <option value="0.0001">100 µs</option>
+                <option value="0.0005">500 µs</option>
+                <option value="0.001">1 ms</option>
+                <option value="0.002" selected>2 ms</option>
+                <option value="0.005">5 ms</option>
+                <option value="0.01">10 ms</option>
+                <option value="0.05">50 ms</option>
+                <option value="0.1">100 ms</option>
+                <option value="0.5">500 ms</option>
+              </select>
+            </div>
+            <div class="control-row">
+              <label><input type="checkbox" id="scopeCursors"> Cursors</label>
+              <button id="scopeAutoSet" class="ribbon-btn" style="padding: 2px 6px;">Auto Set</button>
+            </div>
+          </div>
+
+          <!-- Trigger -->
+          <div class="scope-control-card">
+            <div class="control-label">Trigger</div>
+            <div class="control-row">
+              <span>Source</span>
+              <select id="scopeTrigSource" class="scope-select">
+                <option value="chA">CH A</option>
+                <option value="chB">CH B</option>
+              </select>
+            </div>
+            <div class="control-row">
+              <span>Slope</span>
+              <select id="scopeTrigSlope" class="scope-select">
+                <option value="rising">Rising ↑</option>
+                <option value="falling">Falling ↓</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Channel A -->
+          <div class="scope-control-card" style="border-left: 3px solid #38bdf8;">
+            <div class="control-label" style="color: #38bdf8;">CH A (Blue)</div>
+            <div class="control-row">
+              <span>Volts/Div</span>
+              <select id="scopeVoltsChA" class="scope-select">
+                <option value="0.05">50 mV</option>
+                <option value="0.1">100 mV</option>
+                <option value="0.5">500 mV</option>
+                <option value="1.0">1.0 V</option>
+                <option value="2.0" selected>2.0 V</option>
+                <option value="5.0">5.0 V</option>
+                <option value="10.0">10.0 V</option>
+              </select>
+            </div>
+            <div class="control-row">
+              <span>Probe</span>
+              <select id="scopeProbeChA" class="scope-select">
+                <option value="">(None)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Channel B -->
+          <div class="scope-control-card" style="border-left: 3px solid #facc15;">
+            <div class="control-label" style="color: #facc15;">CH B (Yellow)</div>
+            <div class="control-row">
+              <span>Volts/Div</span>
+              <select id="scopeVoltsChB" class="scope-select">
+                <option value="0.05">50 mV</option>
+                <option value="0.1">100 mV</option>
+                <option value="0.5">500 mV</option>
+                <option value="1.0">1.0 V</option>
+                <option value="2.0" selected>2.0 V</option>
+                <option value="5.0">5.0 V</option>
+                <option value="10.0">10.0 V</option>
+              </select>
+            </div>
+            <div class="control-row">
+              <span>Probe</span>
+              <select id="scopeProbeChB" class="scope-select">
+                <option value="">(None)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Content: Multimeter -->
+      <div class="drawer-content" id="tabContentMultimeter" style="display: none;">
+        <div class="dmm-chassis">
+          <div class="dmm-lcd-screen">
+            <div class="dmm-main-digits" id="dmmDisplay">0.000 V</div>
+            <div class="dmm-mode-badge" id="dmmBadge">V DC</div>
+          </div>
+
+          <div class="dmm-mode-selector">
+            <button class="dmm-mode-btn active" data-mode="VDC">V DC</button>
+            <button class="dmm-mode-btn" data-mode="VAC">V AC</button>
+            <button class="dmm-mode-btn" data-mode="IDC">I DC</button>
+            <button class="dmm-mode-btn" data-mode="OHM">Ω Ohms</button>
+            <button class="dmm-mode-btn" data-mode="DIODE">Diode</button>
+            <button class="dmm-mode-btn" data-mode="CONT">Buzzer</button>
+          </div>
+        </div>
+
+        <div class="scope-control-card">
+          <div class="control-label">Multimeter Probes</div>
+          <div class="control-row">
+            <span>Red Lead (+)</span>
+            <select id="dmmRedProbe" class="scope-select">
+              <option value="">(Unconnected)</option>
+            </select>
+          </div>
+          <div class="control-row">
+            <span>Black Lead (COM)</span>
+            <select id="dmmBlackProbe" class="scope-select">
+              <option value="GND">GND (0V)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Content: Property Inspector -->
+      <div class="drawer-content" id="tabContentInspector" style="display: none;">
+        <div id="inspectorContent">
+          <div style="color: var(--text-muted); font-size: 12px; text-align: center; margin-top: 40px;">
+            Select any component on the schematic canvas to inspect and edit its electrical parameters.
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Bottom Status Bar -->
+  <footer class="multisim-statusbar">
+    <div class="status-group">
+      <div>
+        <span class="status-indicator active" id="simStatusLight"></span>
+        <span id="simStatusText">Simulation Running</span>
+      </div>
+      <div>Sim Time: <span id="simTimeLabel">0.0 ms</span></div>
+      <div>Timestep: 100 µs</div>
+      <div>Solver: MNA Newton-Raphson</div>
+    </div>
+    <div class="status-group">
+      <div id="activeNodesLabel">Nodes: 0</div>
+      <div id="fpsLabel">60 FPS</div>
+    </div>
+  </footer>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
