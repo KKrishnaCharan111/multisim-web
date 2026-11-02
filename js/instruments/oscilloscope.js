@@ -1,6 +1,6 @@
 /**
- * Multisim Web - 4-Channel Digital Storage Oscilloscope (Agilent/Tektronix Style)
- * High-speed waveform rendering, Volts/Div, Timebase, Triggering, and Cursors.
+ * Multisim Web Studio - 4-Channel Digital Storage Oscilloscope (Agilent/Tektronix Style)
+ * High-speed waveform rendering, Volts/Div, Timebase, Triggering, and Live Signal Metrics (Vpp, Vrms, Freq).
  */
 
 export class Oscilloscope {
@@ -11,10 +11,8 @@ export class Oscilloscope {
 
     // Channels
     this.channels = [
-      { id: 'chA', label: 'CH A', color: '#38bdf8', enabled: true, voltsPerDiv: 2.0, yOffset: 0, probePin: null, coupling: 'DC' },
-      { id: 'chB', label: 'CH B', color: '#facc15', enabled: true, voltsPerDiv: 2.0, yOffset: 0, probePin: null, coupling: 'DC' },
-      { id: 'chC', label: 'CH C', color: '#4ade80', enabled: false, voltsPerDiv: 5.0, yOffset: 0, probePin: null, coupling: 'DC' },
-      { id: 'chD', label: 'CH D', color: '#f43f5e', enabled: false, voltsPerDiv: 5.0, yOffset: 0, probePin: null, coupling: 'DC' }
+      { id: 'chA', label: 'CH A', color: '#0ea5e9', enabled: true, voltsPerDiv: 2.0, yOffset: 0, probePin: null, vMin: 0, vMax: 0, vpp: 0, vRms: 0, freq: 0 },
+      { id: 'chB', label: 'CH B', color: '#f59e0b', enabled: true, voltsPerDiv: 2.0, yOffset: 0, probePin: null, vMin: 0, vMax: 0, vpp: 0, vRms: 0, freq: 0 }
     ];
 
     // Timebase: seconds per division
@@ -26,12 +24,12 @@ export class Oscilloscope {
     this.triggerSource = 'chA';
     this.triggerLevel = 0.0;
     this.triggerSlope = 'rising'; // 'rising' or 'falling'
-    this.triggerMode = 'auto'; // 'auto', 'normal', 'single'
+    this.triggerMode = 'auto'; // 'auto', 'normal'
     this.isTriggered = false;
 
     // Cursors
     this.showCursors = false;
-    this.cursorX1 = 0.3; // 0..1 normalized
+    this.cursorX1 = 0.3;
     this.cursorX2 = 0.7;
 
     this.isPaused = false;
@@ -40,7 +38,13 @@ export class Oscilloscope {
   setProbe(chIndex, componentId, pinIndex) {
     if (this.channels[chIndex]) {
       this.channels[chIndex].probePin = `${componentId}_p${pinIndex}`;
+      this.channels[chIndex].compRefId = componentId;
+      this.channels[chIndex].pIdx = pinIndex;
     }
+  }
+
+  getMetrics(chIndex) {
+    return this.channels[chIndex] || { vpp: 0, vRms: 0, freq: 0 };
   }
 
   render() {
@@ -48,11 +52,11 @@ export class Oscilloscope {
     const w = this.canvas.width;
     const h = this.canvas.height;
 
-    // Dark phosphor CRT background
+    // Instrument CRT background
     ctx.fillStyle = '#0a1017';
     ctx.fillRect(0, 0, w, h);
 
-    // Draw CRT graticule grid
+    // CRT graticule grid
     ctx.strokeStyle = '#1e293b';
     ctx.lineWidth = 1;
     const dx = w / this.numDivsX;
@@ -95,7 +99,7 @@ export class Oscilloscope {
       const trigY = h / 2 - (this.triggerLevel / trigCh.voltsPerDiv) * dy - trigCh.yOffset * dy;
       ctx.save();
       ctx.setLineDash([4, 4]);
-      ctx.strokeStyle = 'rgba(250, 204, 21, 0.4)';
+      ctx.strokeStyle = 'rgba(245, 158, 11, 0.4)';
       ctx.beginPath();
       ctx.moveTo(0, trigY);
       ctx.lineTo(w, trigY);
@@ -133,10 +137,10 @@ export class Oscilloscope {
       const tStart = tRef - totalTimeWindow / 2;
       const tEnd = tRef + totalTimeWindow / 2;
 
-      // Trace line with glowing phosphor bloom
+      // Trace line with phosphor bloom
       ctx.save();
       ctx.shadowColor = ch.color;
-      ctx.shadowBlur = 8;
+      ctx.shadowBlur = 6;
       ctx.strokeStyle = ch.color;
       ctx.lineWidth = 2.2;
       ctx.beginPath();
@@ -144,17 +148,28 @@ export class Oscilloscope {
       let hasStarted = false;
       let vMin = Infinity;
       let vMax = -Infinity;
+      let sumSq = 0;
+      let count = 0;
+      const zeroCrossings = [];
 
       for (let i = 0; i < history.length; i++) {
         const pt = history[i];
         if (pt.t < tStart || pt.t > tEnd) continue;
 
         const x = ((pt.t - tStart) / totalTimeWindow) * w;
-        // Y mapping: center is 0V
         const y = h / 2 - (pt.v / ch.voltsPerDiv) * dy - ch.yOffset * dy;
 
         if (pt.v < vMin) vMin = pt.v;
         if (pt.v > vMax) vMax = pt.v;
+        sumSq += pt.v * pt.v;
+        count++;
+
+        if (i > 0) {
+          const prevV = history[i - 1].v;
+          if ((prevV <= 0 && pt.v > 0) || (prevV >= 0 && pt.v < 0)) {
+            zeroCrossings.push(pt.t);
+          }
+        }
 
         if (!hasStarted) {
           ctx.moveTo(x, y);
@@ -169,14 +184,28 @@ export class Oscilloscope {
       // Store stats
       ch.vMin = vMin === Infinity ? 0 : vMin;
       ch.vMax = vMax === -Infinity ? 0 : vMax;
-      ch.vpp = ch.vMax - ch.vMin;
+      ch.vpp = Math.max(0, ch.vMax - ch.vMin);
+      ch.vRms = count > 0 ? Math.sqrt(sumSq / count) : 0;
+
+      // Calculate frequency
+      if (zeroCrossings.length >= 3) {
+        const halfPeriods = [];
+        for (let k = 1; k < zeroCrossings.length; k++) {
+          halfPeriods.push(zeroCrossings[k] - zeroCrossings[k - 1]);
+        }
+        const avgHalfPeriod = halfPeriods.reduce((a, b) => a + b, 0) / halfPeriods.length;
+        const period = avgHalfPeriod * 2;
+        ch.freq = period > 0 ? 1 / period : 0;
+      } else {
+        ch.freq = 0;
+      }
     }
 
     // Render Cursors if active
     if (this.showCursors) {
       const x1 = this.cursorX1 * w;
       const x2 = this.cursorX2 * w;
-      ctx.strokeStyle = '#f43f5e';
+      ctx.strokeStyle = '#ef4444';
       ctx.lineWidth = 1.5;
       ctx.setLineDash([6, 3]);
 
@@ -191,15 +220,15 @@ export class Oscilloscope {
       const deltaT = Math.abs(this.cursorX2 - this.cursorX1) * totalTimeWindow;
       const freq = deltaT > 0 ? 1 / deltaT : 0;
 
-      ctx.fillStyle = '#f43f5e';
-      ctx.font = '11px monospace';
+      ctx.fillStyle = '#ef4444';
+      ctx.font = '11px "JetBrains Mono", monospace';
       ctx.fillText(`ΔT: ${(deltaT * 1000).toFixed(3)} ms | f: ${freq >= 1000 ? (freq / 1000).toFixed(2) + ' kHz' : freq.toFixed(1) + ' Hz'}`, x1 + 8, 20);
     }
 
     // Top status indicators
-    ctx.font = '11px "Segoe UI", sans-serif';
+    ctx.font = '11px "Inter", sans-serif';
     ctx.fillStyle = '#94a3b8';
-    ctx.fillText(`Timebase: ${this.formatTime(this.timePerDiv)}/div | Grid: 10x8`, 10, 16);
+    ctx.fillText(`Timebase: ${this.formatTime(this.timePerDiv)}/div | Grid: 10×8`, 10, 16);
   }
 
   formatTime(sec) {

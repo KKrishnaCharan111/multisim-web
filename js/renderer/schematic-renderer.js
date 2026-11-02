@@ -1,7 +1,12 @@
 /**
  * Multisim Web Studio - Schematic Canvas Renderer & Interactive Wiring System
- * Professional academic & engineering schematic rendering with 360° component rotation,
- * real-time voltage wire coloring, electron charge flow animations, and image export.
+ * Professional CAD/EDA Engineering Environment:
+ * - Instrument Dark-Slate Palette (#11161d background, #1c2533 technical grid)
+ * - Orthogonal Manhattan Wire Router (90° corner routing with segment offset dragging)
+ * - Magnetic Terminal Snapping with Prominent Target Rings (8px radius)
+ * - Standardized Automatic Solder Junction Dots
+ * - Interactive Oscilloscope Probe Badging ([CH A] Cyan, [CH B] Amber)
+ * - High-Res PNG Schematic Export
  */
 
 export class SchematicRenderer {
@@ -17,6 +22,7 @@ export class SchematicRenderer {
 
     this.selectedComponent = null;
     this.hoveredPin = null;
+    this.hoveredWireSegment = null;
     this.isWiring = false;
     this.wireStartPin = null;
     this.mouseWorldPos = { x: 0, y: 0 };
@@ -24,14 +30,10 @@ export class SchematicRenderer {
 
     this.showCurrentFlow = true;
     this.currentDotOffset = 0;
-    this.theme = 'dark';
+    this.scopeChannels = [];
 
     this.smokeParticles = [];
     this.lastFrameTime = performance.now();
-  }
-
-  setTheme(theme) {
-    this.theme = theme;
   }
 
   screenToWorld(sx, sy) {
@@ -75,8 +77,8 @@ export class SchematicRenderer {
 
     this.currentDotOffset = (this.currentDotOffset + dt * 45) % 20;
 
-    // Background color
-    ctx.fillStyle = this.theme === 'light' ? '#ffffff' : '#090e17';
+    // Dark-Slate Instrument Canvas Background
+    ctx.fillStyle = '#11161d';
     ctx.fillRect(0, 0, w, h);
 
     // Transform viewport
@@ -84,16 +86,16 @@ export class SchematicRenderer {
     ctx.translate(this.panX, this.panY);
     ctx.scale(this.zoom, this.zoom);
 
-    // Grid dots
+    // Technical grid dots
     this.drawGrid(w, h);
 
-    // Synchronize wire paths from component net connections
+    // Synchronize wire paths from component net connections with Manhattan routing
     this.syncWiresFromNets();
 
     // Draw Wires with live voltage colors & moving current charges
     this.drawWires();
 
-    // Draw active in-progress wiring wire
+    // Draw active in-progress Manhattan wire
     if (this.isWiring && this.wireStartPin) {
       this.drawActiveWire();
     }
@@ -103,12 +105,15 @@ export class SchematicRenderer {
       this.drawComponent(comp);
     }
 
+    // Draw Oscilloscope Probe Badges on the canvas
+    this.drawProbeBadges();
+
     // Draw smoke effects for blown components
     this.updateAndDrawSmoke(dt);
 
     ctx.restore();
 
-    // Draw hover pin snap in screen space
+    // Draw magnetic snap target ring in screen space
     if (this.hoveredPin) {
       this.drawPinSnap(this.hoveredPin);
     }
@@ -126,14 +131,18 @@ export class SchematicRenderer {
     const startY = Math.floor(top / this.gridSize) * this.gridSize;
     const endY = Math.ceil(bottom / this.gridSize) * this.gridSize;
 
-    ctx.fillStyle = this.theme === 'light' ? '#94a3b8' : '#334155';
+    ctx.fillStyle = '#1c2533';
     for (let x = startX; x <= endX; x += this.gridSize) {
       for (let y = startY; y <= endY; y += this.gridSize) {
-        ctx.fillRect(x - 0.75, y - 0.75, 1.5, 1.5);
+        ctx.fillRect(x - 0.8, y - 0.8, 1.6, 1.6);
       }
     }
   }
 
+  /**
+   * Builds orthogonal Manhattan wire segments from net connectivity.
+   * If a segment has custom offset stored on its net, it preserves it.
+   */
   syncWiresFromNets() {
     const netGroups = new Map();
     for (const comp of this.solver.components) {
@@ -150,19 +159,33 @@ export class SchematicRenderer {
     this.wireSegments = [];
     for (const [netId, pinList] of netGroups.entries()) {
       if (pinList.length < 2) continue;
+
       for (let i = 0; i < pinList.length - 1; i++) {
         const p1 = pinList[i];
         const p2 = pinList[i + 1];
+
+        // Manhattan trunk X calculation: snapped to grid between p1 and p2
+        let trunkX = (p1.comp.wireTrunkX && p1.comp.wireTrunkX[netId]) !== undefined 
+          ? p1.comp.wireTrunkX[netId] 
+          : this.snapToGrid((p1.x + p2.x) / 2);
+
+        if (trunkX === p1.x && p1.x !== p2.x) trunkX = p2.x;
+
         this.wireSegments.push({
+          id: `${netId}_seg_${i}`,
           netId,
           x1: p1.x,
           y1: p1.y,
           x2: p2.x,
           y2: p2.y,
+          trunkX,
           v1: p1.pin.voltage ?? 0,
           v2: p2.pin.voltage ?? 0,
           comp1: p1.comp,
-          comp2: p2.comp
+          comp2: p2.comp,
+          pIdx1: p1.pIdx,
+          pIdx2: p2.pIdx,
+          pinCount: pinList.length
         });
       }
     }
@@ -172,26 +195,36 @@ export class SchematicRenderer {
     const ctx = this.ctx;
 
     for (const wire of (this.wireSegments || [])) {
-      const midX = (wire.x1 + wire.x2) / 2;
       const v = (wire.v1 + wire.v2) / 2;
 
-      let wireColor = this.theme === 'light' ? '#0f172a' : '#94a3b8';
+      let wireColor = '#94a3b8'; // Default Slate
       if (wire.netId === 'GND') {
-        wireColor = this.theme === 'light' ? '#15803d' : '#22c55e';
+        wireColor = '#10b981'; // Lab Green
       } else if (v > 0.5) {
-        wireColor = this.theme === 'light' ? '#dc2626' : '#ef4444';
+        wireColor = '#f59e0b'; // High-vis Amber
       } else if (v < -0.5) {
-        wireColor = this.theme === 'light' ? '#2563eb' : '#38bdf8';
+        wireColor = '#0ea5e9'; // Cyan / Slate Blue
       }
 
       ctx.save();
       ctx.strokeStyle = wireColor;
-      ctx.lineWidth = 2.0;
+      ctx.lineWidth = 2.2;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      // 90-degree Orthogonal Manhattan Route
       ctx.beginPath();
-      ctx.moveTo(wire.x1, wire.y1);
-      ctx.lineTo(midX, wire.y1);
-      ctx.lineTo(midX, wire.y2);
-      ctx.lineTo(wire.x2, wire.y2);
+      if (wire.x1 === wire.x2 || wire.y1 === wire.y2) {
+        // Direct orthogonal line
+        ctx.moveTo(wire.x1, wire.y1);
+        ctx.lineTo(wire.x2, wire.y2);
+      } else {
+        // Manhattan Z-Route via trunkX
+        ctx.moveTo(wire.x1, wire.y1);
+        ctx.lineTo(wire.trunkX, wire.y1);
+        ctx.lineTo(wire.trunkX, wire.y2);
+        ctx.lineTo(wire.x2, wire.y2);
+      }
       ctx.stroke();
 
       // Solder junction dots
@@ -201,15 +234,27 @@ export class SchematicRenderer {
       ctx.arc(wire.x2, wire.y2, 3.5, 0, Math.PI * 2);
       ctx.fill();
 
-      // Live animated electron charge dots
+      // If more than 2 pins are on this net, draw a prominent 4.5px filled solder dot at junction
+      if (wire.pinCount >= 3) {
+        ctx.fillStyle = '#f59e0b';
+        ctx.beginPath();
+        ctx.arc(wire.trunkX, wire.y2, 4.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Animated electron current charges
       if (this.showCurrentFlow && this.solver.isRunning) {
         const branchCurrent = Math.abs((wire.comp1?.current || wire.comp2?.current || 0));
         if (branchCurrent > 1e-4) {
           const speedFactor = Math.min(1.0, branchCurrent / 0.05);
-          ctx.fillStyle = this.theme === 'light' ? '#d97706' : '#facc15';
-          this.drawCurrentDotsAlongLine(ctx, wire.x1, wire.y1, midX, wire.y1, speedFactor);
-          this.drawCurrentDotsAlongLine(ctx, midX, wire.y1, midX, wire.y2, speedFactor);
-          this.drawCurrentDotsAlongLine(ctx, midX, wire.y2, wire.x2, wire.y2, speedFactor);
+          ctx.fillStyle = '#facc15';
+          if (wire.x1 === wire.x2 || wire.y1 === wire.y2) {
+            this.drawCurrentDotsAlongLine(ctx, wire.x1, wire.y1, wire.x2, wire.y2, speedFactor);
+          } else {
+            this.drawCurrentDotsAlongLine(ctx, wire.x1, wire.y1, wire.trunkX, wire.y1, speedFactor);
+            this.drawCurrentDotsAlongLine(ctx, wire.trunkX, wire.y1, wire.trunkX, wire.y2, speedFactor);
+            this.drawCurrentDotsAlongLine(ctx, wire.trunkX, wire.y2, wire.x2, wire.y2, speedFactor);
+          }
         }
       }
 
@@ -239,19 +284,80 @@ export class SchematicRenderer {
     const ctx = this.ctx;
     const p1 = this.getPinWorldPos(this.wireStartPin.comp, this.wireStartPin.pin);
     const p2 = this.mouseWorldPos;
-    const midX = (p1.x + p2.x) / 2;
+    const trunkX = this.snapToGrid((p1.x + p2.x) / 2);
 
     ctx.save();
     ctx.setLineDash([5, 4]);
-    ctx.strokeStyle = this.theme === 'light' ? '#0284c7' : '#38bdf8';
-    ctx.lineWidth = 2.0;
+    ctx.strokeStyle = '#0ea5e9';
+    ctx.lineWidth = 2.2;
     ctx.beginPath();
     ctx.moveTo(p1.x, p1.y);
-    ctx.lineTo(midX, p1.y);
-    ctx.lineTo(midX, p2.y);
+    ctx.lineTo(trunkX, p1.y);
+    ctx.lineTo(trunkX, p2.y);
     ctx.lineTo(p2.x, p2.y);
     ctx.stroke();
     ctx.restore();
+  }
+
+  // Draw [CH A] (Cyan) and [CH B] (Amber) badges next to probed pins on canvas
+  drawProbeBadges() {
+    if (!this.scopeChannels || this.scopeChannels.length === 0) return;
+    const ctx = this.ctx;
+
+    for (let chIdx = 0; chIdx < this.scopeChannels.length; chIdx++) {
+      const ch = this.scopeChannels[chIdx];
+      if (!ch.enabled || !ch.probePin) continue;
+
+      // Extract compId and pIdx from probePin (e.g. comp_123_p0)
+      const parts = ch.probePin.split('_p');
+      if (parts.length < 2) continue;
+      const compId = parts[0];
+      const pIdx = parseInt(parts[1], 10);
+
+      const comp = this.solver.components.find(c => c.id === compId);
+      if (!comp || !comp.pins[pIdx]) continue;
+
+      const pos = this.getPinWorldPos(comp, comp.pins[pIdx]);
+      const badgeText = chIdx === 0 ? 'CH A' : 'CH B';
+      const badgeColor = chIdx === 0 ? '#0ea5e9' : '#f59e0b';
+
+      ctx.save();
+      // Draw lead marker line
+      ctx.strokeStyle = badgeColor;
+      ctx.lineWidth = 1.8;
+      ctx.setLineDash([2, 2]);
+      ctx.beginPath();
+      ctx.moveTo(pos.x, pos.y);
+      ctx.lineTo(pos.x + 18, pos.y - 20);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Draw Badge Pill
+      const bx = pos.x + 18;
+      const by = pos.y - 32;
+      const bw = 46;
+      const bh = 18;
+
+      ctx.fillStyle = '#0f172a';
+      ctx.strokeStyle = badgeColor;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(bx, by, bw, bh, 4);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = badgeColor;
+      ctx.font = 'bold 10px "JetBrains Mono", monospace';
+      ctx.fillText(badgeText, bx + 7, by + 13);
+
+      // Target dot at pin
+      ctx.fillStyle = badgeColor;
+      ctx.beginPath();
+      ctx.arc(pos.x, pos.y, 4.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+    }
   }
 
   drawComponent(comp) {
@@ -259,7 +365,7 @@ export class SchematicRenderer {
     const isSelected = this.selectedComponent?.id === comp.id;
 
     ctx.save();
-    // Translate to center and apply 360° rotation!
+    // Center translation and 360° rotation
     const cx = comp.x + comp.width / 2;
     const cy = comp.y + comp.height / 2;
     ctx.translate(cx, cy);
@@ -270,15 +376,15 @@ export class SchematicRenderer {
     ctx.translate(-comp.width / 2, -comp.height / 2);
 
     if (isSelected) {
-      ctx.strokeStyle = '#0284c7';
+      ctx.strokeStyle = '#0ea5e9';
       ctx.lineWidth = 2.0;
       ctx.setLineDash([4, 3]);
       ctx.strokeRect(-6, -6, (comp.width || 48) + 12, (comp.height || 36) + 12);
       ctx.setLineDash([]);
     }
 
-    ctx.strokeStyle = this.theme === 'light' ? '#0f172a' : '#f1f5f9';
-    ctx.fillStyle = this.theme === 'light' ? '#0f172a' : '#f1f5f9';
+    ctx.strokeStyle = '#e2e8f0';
+    ctx.fillStyle = '#e2e8f0';
     ctx.lineWidth = 2.0;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
@@ -311,7 +417,7 @@ export class SchematicRenderer {
         ctx.lineTo(22, 14);
         ctx.closePath();
         ctx.fill();
-        ctx.font = 'bold 10px sans-serif';
+        ctx.font = 'bold 10px "Inter", sans-serif';
         ctx.fillText(comp.type === 'VCC' ? '+5V' : '+12V', 22, 12);
         break;
       }
@@ -327,123 +433,109 @@ export class SchematicRenderer {
         ctx.lineTo(22, 18);
         ctx.closePath();
         ctx.fill();
-        ctx.font = 'bold 10px sans-serif';
-        ctx.fillText('-12V', 22, 26);
+        ctx.font = 'bold 10px "Inter", sans-serif';
+        ctx.fillText('-12V', 22, 28);
         break;
       }
 
       case 'DC_POWER': {
         ctx.beginPath();
-        ctx.moveTo(24, 0);
-        ctx.lineTo(24, 18);
-        ctx.moveTo(6, 18);
-        ctx.lineTo(42, 18);
-        ctx.moveTo(12, 28);
-        ctx.lineTo(36, 28);
-        ctx.moveTo(24, 28);
-        ctx.lineTo(24, 48);
+        ctx.moveTo(16, 0);
+        ctx.lineTo(16, 12);
+        ctx.moveTo(16, 28);
+        ctx.lineTo(16, 40);
         ctx.stroke();
-        ctx.font = 'bold 12px sans-serif';
-        ctx.fillStyle = '#dc2626';
-        ctx.fillText('+', 44, 18);
-        ctx.fillStyle = '#2563eb';
-        ctx.fillText('–', 40, 30);
+
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(4, 12);
+        ctx.lineTo(28, 12);
+        ctx.stroke();
+
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(8, 28);
+        ctx.lineTo(24, 28);
+        ctx.stroke();
         break;
       }
 
       case 'AC_POWER': {
         ctx.beginPath();
-        ctx.arc(24, 24, 16, 0, Math.PI * 2);
+        ctx.arc(20, 20, 16, 0, Math.PI * 2);
         ctx.stroke();
         ctx.beginPath();
-        ctx.moveTo(24, 0);
-        ctx.lineTo(24, 8);
-        ctx.moveTo(24, 40);
-        ctx.lineTo(24, 48);
-        ctx.moveTo(14, 24);
-        ctx.bezierCurveTo(17, 16, 21, 16, 24, 24);
-        ctx.bezierCurveTo(27, 32, 31, 32, 34, 24);
+        ctx.moveTo(20, 0);
+        ctx.lineTo(20, 4);
+        ctx.moveTo(20, 36);
+        ctx.lineTo(20, 40);
         ctx.stroke();
-        break;
-      }
-
-      case 'THREE_PHASE_SOURCE': {
-        ctx.strokeRect(8, 4, 48, 56);
-        ctx.font = 'bold 9px sans-serif';
-        ctx.fillText('3-PHASE', 12, 22);
-        ctx.fillText('~ 120V', 12, 36);
-        break;
-      }
-
-      case 'DIGITAL_CLOCK': {
-        ctx.strokeRect(6, 6, 36, 36);
         ctx.beginPath();
-        ctx.moveTo(0, 24);
-        ctx.lineTo(6, 24);
-        ctx.moveTo(42, 24);
-        ctx.lineTo(48, 24);
-        ctx.moveTo(12, 30);
-        ctx.lineTo(18, 30);
-        ctx.lineTo(18, 18);
-        ctx.lineTo(26, 18);
-        ctx.lineTo(26, 30);
-        ctx.lineTo(34, 30);
+        ctx.bezierCurveTo(12, 14, 16, 26, 20, 20);
+        ctx.bezierCurveTo(24, 14, 28, 26, 28, 20);
         ctx.stroke();
         break;
       }
 
+      case 'DIGITAL_CLOCK':
       case 'SINE_GEN': {
+        ctx.strokeRect(4, 4, 32, 32);
         ctx.beginPath();
-        ctx.arc(24, 24, 16, 0, Math.PI * 2);
+        ctx.moveTo(36, 20);
+        ctx.lineTo(40, 20);
         ctx.stroke();
         ctx.beginPath();
-        ctx.moveTo(24, 0);
-        ctx.lineTo(24, 8);
-        ctx.moveTo(24, 40);
-        ctx.lineTo(24, 48);
-        ctx.moveTo(15, 24);
-        ctx.quadraticCurveTo(19, 14, 24, 24);
-        ctx.quadraticCurveTo(29, 34, 33, 24);
+        ctx.moveTo(10, 25);
+        ctx.lineTo(10, 15);
+        ctx.lineTo(20, 15);
+        ctx.lineTo(20, 25);
+        ctx.lineTo(30, 25);
+        ctx.lineTo(30, 15);
         ctx.stroke();
         break;
       }
 
       case 'RESISTOR': {
         ctx.beginPath();
-        ctx.moveTo(0, 12);
-        ctx.lineTo(10, 12);
-        ctx.lineTo(14, 4);
-        ctx.lineTo(20, 20);
-        ctx.lineTo(26, 4);
-        ctx.lineTo(32, 20);
-        ctx.lineTo(38, 4);
-        ctx.lineTo(44, 20);
-        ctx.lineTo(47, 12);
-        ctx.lineTo(56, 12);
+        ctx.moveTo(0, 16);
+        ctx.lineTo(12, 16);
+        ctx.lineTo(16, 6);
+        ctx.lineTo(22, 26);
+        ctx.lineTo(28, 6);
+        ctx.lineTo(34, 26);
+        ctx.lineTo(40, 6);
+        ctx.lineTo(46, 26);
+        ctx.lineTo(50, 16);
+        ctx.lineTo(64, 16);
         ctx.stroke();
         break;
       }
 
       case 'POTENTIOMETER': {
         ctx.beginPath();
-        ctx.moveTo(0, 12);
-        ctx.lineTo(12, 12);
-        ctx.lineTo(16, 4);
-        ctx.lineTo(22, 20);
-        ctx.lineTo(28, 4);
-        ctx.lineTo(34, 20);
-        ctx.lineTo(40, 4);
-        ctx.lineTo(46, 20);
-        ctx.lineTo(50, 12);
-        ctx.lineTo(64, 12);
+        ctx.moveTo(0, 16);
+        ctx.lineTo(12, 16);
+        ctx.lineTo(16, 6);
+        ctx.lineTo(22, 26);
+        ctx.lineTo(28, 6);
+        ctx.lineTo(34, 26);
+        ctx.lineTo(40, 6);
+        ctx.lineTo(46, 26);
+        ctx.lineTo(50, 16);
+        ctx.lineTo(64, 16);
+        ctx.stroke();
+
+        const sliderX = 12 + (comp.sliderValue || 0.5) * 38;
+        ctx.strokeStyle = '#f59e0b';
+        ctx.fillStyle = '#f59e0b';
+        ctx.beginPath();
         ctx.moveTo(32, 40);
-        ctx.lineTo(32, 24);
+        ctx.lineTo(sliderX, 26);
         ctx.stroke();
         ctx.beginPath();
-        ctx.moveTo(28, 24);
-        ctx.lineTo(32, 16);
-        ctx.lineTo(36, 24);
-        ctx.closePath();
+        ctx.moveTo(sliderX - 3, 30);
+        ctx.lineTo(sliderX, 24);
+        ctx.lineTo(sliderX + 3, 30);
         ctx.fill();
         break;
       }
@@ -451,13 +543,13 @@ export class SchematicRenderer {
       case 'CAPACITOR': {
         ctx.beginPath();
         ctx.moveTo(0, 16);
-        ctx.lineTo(20, 16);
-        ctx.moveTo(20, 4);
-        ctx.lineTo(20, 28);
-        ctx.moveTo(28, 4);
-        ctx.lineTo(28, 28);
-        ctx.moveTo(28, 16);
+        ctx.lineTo(16, 16);
+        ctx.moveTo(32, 16);
         ctx.lineTo(48, 16);
+        ctx.moveTo(16, 4);
+        ctx.lineTo(16, 28);
+        ctx.moveTo(32, 4);
+        ctx.lineTo(32, 28);
         ctx.stroke();
         break;
       }
@@ -465,33 +557,28 @@ export class SchematicRenderer {
       case 'CAPACITOR_ELECTROLYTIC': {
         ctx.beginPath();
         ctx.moveTo(0, 16);
-        ctx.lineTo(20, 16);
-        ctx.moveTo(20, 4);
-        ctx.lineTo(20, 28);
-        ctx.moveTo(28, 4);
-        ctx.quadraticCurveTo(24, 16, 28, 28);
-        ctx.moveTo(26, 16);
+        ctx.lineTo(16, 16);
+        ctx.moveTo(32, 16);
         ctx.lineTo(48, 16);
+        ctx.moveTo(16, 4);
+        ctx.lineTo(16, 28);
         ctx.stroke();
-        ctx.font = 'bold 10px sans-serif';
-        ctx.fillStyle = '#dc2626';
-        ctx.fillText('+', 12, 10);
+        ctx.beginPath();
+        ctx.arc(36, 16, 12, (3 * Math.PI) / 4, (5 * Math.PI) / 4);
+        ctx.stroke();
+        ctx.font = 'bold 9px sans-serif';
+        ctx.fillText('+', 8, 12);
         break;
       }
 
       case 'INDUCTOR': {
         ctx.beginPath();
-        ctx.moveTo(0, 14);
-        ctx.lineTo(12, 14);
-        ctx.stroke();
-        for (let i = 0; i < 4; i++) {
-          ctx.beginPath();
-          ctx.arc(16 + i * 8, 14, 4, Math.PI, 0, false);
-          ctx.stroke();
-        }
-        ctx.beginPath();
-        ctx.moveTo(44, 14);
-        ctx.lineTo(56, 14);
+        ctx.moveTo(0, 16);
+        ctx.lineTo(8, 16);
+        ctx.arc(16, 16, 8, Math.PI, 0);
+        ctx.arc(32, 16, 8, Math.PI, 0);
+        ctx.arc(48, 16, 8, Math.PI, 0);
+        ctx.lineTo(64, 16);
         ctx.stroke();
         break;
       }
@@ -500,65 +587,41 @@ export class SchematicRenderer {
       case 'DIODE_1N4001':
       case 'DIODE_1N4148': {
         ctx.beginPath();
-        ctx.moveTo(0, 14);
-        ctx.lineTo(16, 14);
-        ctx.moveTo(32, 14);
-        ctx.lineTo(48, 14);
-        ctx.moveTo(16, 4);
-        ctx.lineTo(32, 14);
-        ctx.lineTo(16, 24);
+        ctx.moveTo(0, 16);
+        ctx.lineTo(18, 16);
+        ctx.moveTo(36, 16);
+        ctx.lineTo(48, 16);
+        ctx.moveTo(18, 6);
+        ctx.lineTo(34, 16);
+        ctx.lineTo(18, 26);
         ctx.closePath();
+        ctx.fill();
         ctx.stroke();
         ctx.beginPath();
-        ctx.moveTo(32, 4);
-        ctx.lineTo(32, 24);
+        ctx.moveTo(34, 6);
+        ctx.lineTo(34, 26);
         ctx.stroke();
         break;
       }
 
       case 'ZENER_1N4733A': {
         ctx.beginPath();
-        ctx.moveTo(0, 14);
-        ctx.lineTo(16, 14);
-        ctx.moveTo(32, 14);
-        ctx.lineTo(48, 14);
-        ctx.moveTo(16, 4);
-        ctx.lineTo(32, 14);
-        ctx.lineTo(16, 24);
-        ctx.closePath();
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(28, 4);
-        ctx.lineTo(32, 4);
-        ctx.lineTo(32, 24);
-        ctx.lineTo(36, 24);
-        ctx.stroke();
-        break;
-      }
-
-      case 'BRIDGE_RECTIFIER': {
-        ctx.beginPath();
-        ctx.moveTo(28, 8);
-        ctx.lineTo(48, 28);
-        ctx.lineTo(28, 48);
-        ctx.lineTo(8, 28);
-        ctx.closePath();
-        ctx.stroke();
-        ctx.beginPath();
         ctx.moveTo(0, 16);
-        ctx.lineTo(14, 22);
-        ctx.moveTo(0, 40);
-        ctx.lineTo(14, 34);
-        ctx.moveTo(56, 16);
-        ctx.lineTo(42, 22);
-        ctx.moveTo(56, 40);
-        ctx.lineTo(42, 34);
+        ctx.lineTo(18, 16);
+        ctx.moveTo(36, 16);
+        ctx.lineTo(48, 16);
+        ctx.moveTo(18, 6);
+        ctx.lineTo(34, 16);
+        ctx.lineTo(18, 26);
+        ctx.closePath();
+        ctx.fill();
         ctx.stroke();
-        ctx.font = 'bold 9px sans-serif';
-        ctx.fillText('~', 10, 20);
-        ctx.fillText('~', 10, 42);
-        ctx.fillText('+', 44, 20);
-        ctx.fillText('–', 44, 42);
+        ctx.beginPath();
+        ctx.moveTo(30, 6);
+        ctx.lineTo(34, 6);
+        ctx.lineTo(34, 26);
+        ctx.lineTo(38, 26);
+        ctx.stroke();
         break;
       }
 
@@ -571,22 +634,20 @@ export class SchematicRenderer {
         ctx.arc(26, 24, 18, 0, Math.PI * 2);
         ctx.stroke();
         ctx.beginPath();
-        ctx.moveTo(16, 12);
-        ctx.lineTo(16, 36);
         ctx.moveTo(0, 24);
-        ctx.lineTo(16, 24);
-        ctx.moveTo(16, 16);
-        ctx.lineTo(36, 4);
-        ctx.lineTo(36, 0);
-        ctx.moveTo(16, 32);
-        ctx.lineTo(36, 44);
-        ctx.lineTo(36, 48);
+        ctx.lineTo(18, 24);
+        ctx.moveTo(18, 12);
+        ctx.lineTo(18, 36);
+        ctx.moveTo(18, 16);
+        ctx.lineTo(34, 4);
+        ctx.moveTo(18, 32);
+        ctx.lineTo(34, 44);
         ctx.stroke();
+        // NPN Emitter arrow outward
         ctx.beginPath();
-        ctx.moveTo(33, 40);
-        ctx.lineTo(38, 45);
-        ctx.lineTo(31, 46);
-        ctx.closePath();
+        ctx.moveTo(28, 38);
+        ctx.lineTo(34, 44);
+        ctx.lineTo(26, 42);
         ctx.fill();
         break;
       }
@@ -596,78 +657,44 @@ export class SchematicRenderer {
         ctx.arc(26, 24, 18, 0, Math.PI * 2);
         ctx.stroke();
         ctx.beginPath();
-        ctx.moveTo(16, 12);
-        ctx.lineTo(16, 36);
         ctx.moveTo(0, 24);
-        ctx.lineTo(16, 24);
-        ctx.moveTo(16, 16);
-        ctx.lineTo(36, 4);
-        ctx.lineTo(36, 0);
-        ctx.moveTo(16, 32);
-        ctx.lineTo(36, 44);
-        ctx.lineTo(36, 48);
+        ctx.lineTo(18, 24);
+        ctx.moveTo(18, 12);
+        ctx.lineTo(18, 36);
+        ctx.moveTo(18, 16);
+        ctx.lineTo(34, 4);
+        ctx.moveTo(18, 32);
+        ctx.lineTo(34, 44);
         ctx.stroke();
+        // PNP Emitter arrow inward
         ctx.beginPath();
-        ctx.moveTo(22, 12);
-        ctx.lineTo(17, 16);
-        ctx.lineTo(24, 18);
-        ctx.closePath();
+        ctx.moveTo(24, 28);
+        ctx.lineTo(18, 32);
+        ctx.lineTo(22, 34);
         ctx.fill();
         break;
       }
 
       case 'JFET_N_BFW11': {
         ctx.beginPath();
-        ctx.arc(26, 25, 18, 0, Math.PI * 2);
+        ctx.arc(26, 24, 18, 0, Math.PI * 2);
         ctx.stroke();
         ctx.beginPath();
-        ctx.moveTo(0, 25);
-        ctx.lineTo(16, 25);
-        ctx.moveTo(16, 10);
-        ctx.lineTo(16, 40);
-        ctx.moveTo(24, 12);
-        ctx.lineTo(38, 12);
-        ctx.lineTo(38, 0);
-        ctx.moveTo(24, 38);
-        ctx.lineTo(38, 38);
-        ctx.lineTo(38, 50);
-        ctx.moveTo(24, 10);
-        ctx.lineTo(24, 40);
+        ctx.moveTo(0, 32);
+        ctx.lineTo(16, 32);
+        ctx.moveTo(16, 12);
+        ctx.lineTo(16, 36);
+        ctx.moveTo(16, 16);
+        ctx.lineTo(34, 4);
+        ctx.moveTo(16, 32);
+        ctx.lineTo(34, 44);
         ctx.stroke();
+        // Arrow on gate inward
         ctx.beginPath();
-        ctx.moveTo(16, 25);
-        ctx.lineTo(24, 25);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(21, 22);
-        ctx.lineTo(25, 25);
-        ctx.lineTo(21, 28);
-        ctx.closePath();
+        ctx.moveTo(8, 28);
+        ctx.lineTo(14, 32);
+        ctx.lineTo(8, 36);
         ctx.fill();
-        break;
-      }
-
-      case 'MOSFET_N_IRF540': {
-        ctx.beginPath();
-        ctx.moveTo(0, 36);
-        ctx.lineTo(14, 36);
-        ctx.moveTo(14, 14);
-        ctx.lineTo(14, 40);
-        ctx.moveTo(22, 8);
-        ctx.lineTo(22, 18);
-        ctx.moveTo(22, 21);
-        ctx.lineTo(22, 31);
-        ctx.moveTo(22, 34);
-        ctx.lineTo(22, 44);
-        ctx.moveTo(22, 13);
-        ctx.lineTo(40, 13);
-        ctx.lineTo(40, 0);
-        ctx.moveTo(22, 39);
-        ctx.lineTo(40, 39);
-        ctx.lineTo(40, 52);
-        ctx.moveTo(22, 26);
-        ctx.lineTo(40, 39);
-        ctx.stroke();
         break;
       }
 
@@ -675,308 +702,124 @@ export class SchematicRenderer {
       case 'OPAMP_LM358':
       case 'OPAMP_3T_VIRTUAL': {
         ctx.beginPath();
-        ctx.moveTo(12, 4);
+        ctx.moveTo(8, 4);
         ctx.lineTo(54, 28);
-        ctx.lineTo(12, 52);
+        ctx.lineTo(8, 52);
         ctx.closePath();
         ctx.stroke();
+
         ctx.beginPath();
-        ctx.moveTo(0, 16);
-        ctx.lineTo(12, 16);
-        ctx.moveTo(0, 40);
-        ctx.lineTo(12, 40);
+        ctx.moveTo(0, 14);
+        ctx.lineTo(8, 14);
+        ctx.moveTo(0, 42);
+        ctx.lineTo(8, 42);
         ctx.moveTo(54, 28);
         ctx.lineTo(64, 28);
-        if (comp.type === 'OPAMP_741' || comp.type === 'OPAMP_LM358') {
-          ctx.moveTo(32, 0);
-          ctx.lineTo(32, 15);
-          ctx.moveTo(32, 56);
-          ctx.lineTo(32, 41);
-        }
         ctx.stroke();
-        ctx.font = 'bold 12px monospace';
-        ctx.fillText('+', 16, 20);
-        ctx.fillText('–', 16, 44);
+
+        ctx.font = 'bold 12px sans-serif';
+        ctx.fillText('-', 12, 18);
+        ctx.fillText('+', 12, 46);
         break;
       }
 
       case 'TIMER_555': {
-        ctx.strokeRect(10, 8, 52, 64);
-        ctx.beginPath();
-        ctx.arc(36, 8, 6, 0, Math.PI);
-        ctx.stroke();
-        for (let i = 0; i < 4; i++) {
-          const ly = 16 + i * 16;
-          ctx.beginPath();
-          ctx.moveTo(0, ly);
-          ctx.lineTo(10, ly);
-          ctx.moveTo(62, ly);
-          ctx.lineTo(72, ly);
-          ctx.stroke();
-        }
-        ctx.font = 'bold 11px sans-serif';
-        ctx.fillText('NE555', 18, 44);
-        break;
-      }
-
-      case 'TTL_7408':
-      case 'TTL_7400': {
-        ctx.beginPath();
-        ctx.moveTo(12, 6);
-        ctx.lineTo(28, 6);
-        ctx.arc(28, 20, 14, -Math.PI / 2, Math.PI / 2);
-        ctx.lineTo(12, 34);
-        ctx.closePath();
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(0, 12);
-        ctx.lineTo(12, 12);
-        ctx.moveTo(0, 28);
-        ctx.lineTo(12, 28);
-        if (comp.type === 'TTL_7400') {
-          ctx.arc(45, 20, 3, 0, Math.PI * 2);
-          ctx.moveTo(48, 20);
-          ctx.lineTo(56, 20);
-        } else {
-          ctx.moveTo(42, 20);
-          ctx.lineTo(56, 20);
-        }
-        ctx.stroke();
-        break;
-      }
-
-      case 'TTL_7432': {
-        ctx.beginPath();
-        ctx.moveTo(10, 6);
-        ctx.quadraticCurveTo(18, 20, 10, 34);
-        ctx.quadraticCurveTo(34, 34, 42, 20);
-        ctx.quadraticCurveTo(34, 6, 10, 6);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(0, 12);
-        ctx.lineTo(14, 12);
-        ctx.moveTo(0, 28);
-        ctx.lineTo(14, 28);
-        ctx.moveTo(42, 20);
-        ctx.lineTo(56, 20);
-        ctx.stroke();
-        break;
-      }
-
-      case 'TTL_7404': {
-        ctx.beginPath();
-        ctx.moveTo(12, 6);
-        ctx.lineTo(34, 16);
-        ctx.lineTo(12, 26);
-        ctx.closePath();
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.arc(38, 16, 3, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(0, 16);
-        ctx.lineTo(12, 16);
-        ctx.moveTo(41, 16);
-        ctx.lineTo(48, 16);
-        ctx.stroke();
-        break;
-      }
-
-      case 'TTL_7486': {
-        ctx.beginPath();
-        ctx.moveTo(4, 6);
-        ctx.quadraticCurveTo(12, 20, 4, 34);
-        ctx.moveTo(10, 6);
-        ctx.quadraticCurveTo(18, 20, 10, 34);
-        ctx.quadraticCurveTo(34, 34, 42, 20);
-        ctx.quadraticCurveTo(34, 6, 10, 6);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(0, 12);
-        ctx.lineTo(14, 12);
-        ctx.moveTo(0, 28);
-        ctx.lineTo(14, 28);
-        ctx.moveTo(42, 20);
-        ctx.lineTo(56, 20);
-        ctx.stroke();
+        ctx.strokeRect(8, 8, 48, 56);
+        ctx.font = 'bold 10px monospace';
+        ctx.fillText('NE555', 14, 38);
         break;
       }
 
       case 'LED_RED':
       case 'LED_GREEN': {
-        if (comp.brightness > 0.05) {
-          ctx.save();
-          ctx.fillStyle = comp.color || '#ef4444';
-          ctx.shadowColor = comp.color || '#ef4444';
-          ctx.shadowBlur = 18 * comp.brightness;
-          ctx.globalAlpha = Math.min(0.85, comp.brightness);
-          ctx.beginPath();
-          ctx.arc(24, 16, 14, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.restore();
-        }
         ctx.beginPath();
         ctx.moveTo(0, 16);
-        ctx.lineTo(16, 16);
-        ctx.moveTo(32, 16);
+        ctx.lineTo(18, 16);
+        ctx.moveTo(36, 16);
         ctx.lineTo(48, 16);
-        ctx.moveTo(16, 6);
-        ctx.lineTo(32, 16);
-        ctx.lineTo(16, 26);
+        ctx.moveTo(18, 6);
+        ctx.lineTo(34, 16);
+        ctx.lineTo(18, 26);
         ctx.closePath();
+        ctx.fill();
         ctx.stroke();
         ctx.beginPath();
-        ctx.moveTo(32, 6);
-        ctx.lineTo(32, 26);
+        ctx.moveTo(34, 6);
+        ctx.lineTo(34, 26);
+        ctx.stroke();
+
+        // Rays
+        ctx.beginPath();
         ctx.moveTo(22, 4);
         ctx.lineTo(28, -2);
-        ctx.moveTo(28, 6);
-        ctx.lineTo(34, 0);
+        ctx.moveTo(28, 4);
+        ctx.lineTo(34, -2);
         ctx.stroke();
         break;
       }
 
       case 'FILAMENT_LAMP': {
         ctx.beginPath();
-        ctx.arc(24, 24, 16, 0, Math.PI * 2);
+        ctx.arc(24, 20, 16, 0, Math.PI * 2);
         ctx.stroke();
-        if (comp.brightness > 0.05) {
-          ctx.save();
-          ctx.fillStyle = '#fbbf24';
-          ctx.shadowColor = '#fbbf24';
-          ctx.shadowBlur = 24 * comp.brightness;
-          ctx.globalAlpha = Math.min(0.9, comp.brightness);
-          ctx.beginPath();
-          ctx.arc(24, 24, 15, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.restore();
-        }
         ctx.beginPath();
-        ctx.moveTo(0, 24);
-        ctx.lineTo(8, 24);
-        ctx.moveTo(40, 24);
-        ctx.lineTo(48, 24);
-        ctx.moveTo(13, 13);
-        ctx.lineTo(35, 35);
-        ctx.moveTo(35, 13);
-        ctx.lineTo(13, 35);
+        ctx.moveTo(0, 20);
+        ctx.lineTo(8, 20);
+        ctx.moveTo(40, 20);
+        ctx.lineTo(48, 20);
+        ctx.moveTo(16, 20);
+        ctx.lineTo(21, 14);
+        ctx.lineTo(27, 26);
+        ctx.lineTo(32, 20);
         ctx.stroke();
         break;
       }
 
       case 'LDR': {
+        ctx.strokeRect(10, 8, 36, 16);
         ctx.beginPath();
-        ctx.arc(28, 18, 16, 0, Math.PI * 2);
+        ctx.moveTo(0, 16);
+        ctx.lineTo(10, 16);
+        ctx.moveTo(46, 16);
+        ctx.lineTo(56, 16);
         ctx.stroke();
         ctx.beginPath();
-        ctx.moveTo(0, 18);
-        ctx.lineTo(14, 18);
-        ctx.lineTo(18, 12);
-        ctx.lineTo(24, 24);
-        ctx.lineTo(30, 12);
-        ctx.lineTo(36, 24);
-        ctx.lineTo(40, 18);
-        ctx.lineTo(56, 18);
-        ctx.moveTo(8, 4);
-        ctx.lineTo(16, 10);
-        ctx.moveTo(14, 2);
-        ctx.lineTo(22, 8);
+        ctx.moveTo(16, -2);
+        ctx.lineTo(24, 6);
+        ctx.moveTo(24, -2);
+        ctx.lineTo(32, 6);
         ctx.stroke();
         break;
       }
 
       case 'RELAY_5V':
       case 'RELAY_12V': {
-        ctx.strokeRect(10, 6, 44, 44);
-        ctx.beginPath();
-        ctx.moveTo(0, 14);
-        ctx.lineTo(10, 14);
-        ctx.moveTo(0, 42);
-        ctx.lineTo(10, 42);
-        ctx.moveTo(54, 28);
-        ctx.lineTo(64, 28);
-        ctx.moveTo(54, 12);
-        ctx.lineTo(64, 12);
-        ctx.moveTo(54, 44);
-        ctx.lineTo(64, 44);
-        ctx.moveTo(32, 28);
-        ctx.lineTo(48, comp.energized ? 44 : 12);
-        ctx.stroke();
+        ctx.strokeRect(4, 4, 48, 32);
+        ctx.font = 'bold 9px monospace';
+        ctx.fillText(comp.type === 'RELAY_5V' ? 'RLY 5V' : 'RLY 12V', 8, 22);
         break;
       }
 
       case 'SWITCH_SPST': {
         ctx.beginPath();
         ctx.moveTo(0, 16);
-        ctx.lineTo(14, 16);
-        ctx.moveTo(34, 16);
+        ctx.lineTo(12, 16);
+        ctx.moveTo(36, 16);
         ctx.lineTo(48, 16);
         ctx.stroke();
         ctx.beginPath();
-        ctx.arc(14, 16, 2.5, 0, Math.PI * 2);
-        ctx.arc(34, 16, 2.5, 0, Math.PI * 2);
+        ctx.arc(12, 16, 2.5, 0, Math.PI * 2);
+        ctx.arc(36, 16, 2.5, 0, Math.PI * 2);
         ctx.stroke();
         ctx.beginPath();
-        ctx.moveTo(14, 16);
-        ctx.lineTo(comp.isOpen ? 32 : 34, comp.isOpen ? 4 : 16);
-        ctx.stroke();
-        break;
-      }
-
-      case 'DC_MOTOR': {
-        ctx.beginPath();
-        ctx.arc(28, 28, 22, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(0, 28);
-        ctx.lineTo(6, 28);
-        ctx.moveTo(50, 28);
-        ctx.lineTo(56, 28);
-        ctx.stroke();
-        ctx.save();
-        ctx.translate(28, 28);
-        ctx.rotate((comp.motorAngle || 0) * (Math.PI / 180));
-        ctx.fillStyle = this.theme === 'light' ? '#0284c7' : '#38bdf8';
-        for (let blade = 0; blade < 3; blade++) {
-          ctx.rotate((2 * Math.PI) / 3);
-          ctx.beginPath();
-          ctx.ellipse(0, 10, 4, 10, 0, 0, Math.PI * 2);
-          ctx.fill();
+        if (comp.isOpen) {
+          ctx.moveTo(12, 16);
+          ctx.lineTo(32, 4);
+        } else {
+          ctx.moveTo(12, 16);
+          ctx.lineTo(36, 16);
         }
-        ctx.restore();
-        ctx.font = 'bold 9px monospace';
-        ctx.fillText(`${Math.round(comp.rpm || 0)} RPM`, 10, 54);
-        break;
-      }
-
-      case 'DCD_HEX': {
-        ctx.strokeRect(8, 4, 40, 56);
-        ctx.save();
-        ctx.fillStyle = '#ef4444';
-        ctx.shadowColor = '#ef4444';
-        ctx.shadowBlur = 8;
-        ctx.font = 'bold 32px "Courier New", monospace';
-        ctx.textAlign = 'center';
-        ctx.fillText(comp.displayedChar || '0', 28, 44);
-        ctx.restore();
-        break;
-      }
-
-      case 'VOLTMETER_DC':
-      case 'AMMETER_DC': {
-        ctx.strokeRect(8, 4, 48, 32);
-        ctx.beginPath();
-        ctx.moveTo(0, 20);
-        ctx.lineTo(8, 20);
-        ctx.moveTo(56, 20);
-        ctx.lineTo(64, 20);
         ctx.stroke();
-        ctx.fillStyle = '#0f172a';
-        ctx.fillRect(12, 8, 40, 24);
-        ctx.fillStyle = '#4ade80';
-        ctx.font = 'bold 9px monospace';
-        const val = comp.type === 'VOLTMETER_DC' ? `${(comp.voltageDiff || 0).toFixed(2)}V` : `${((comp.current || 0) * 1000).toFixed(1)}mA`;
-        ctx.fillText(val, 16, 24);
         break;
       }
 
@@ -990,7 +833,7 @@ export class SchematicRenderer {
 
     // Draw component pins in rotated local space
     for (const pin of comp.pins) {
-      ctx.strokeStyle = this.theme === 'light' ? '#0284c7' : '#38bdf8';
+      ctx.strokeStyle = '#0ea5e9';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
       ctx.arc(pin.x, pin.y, 2.5, 0, Math.PI * 2);
@@ -1001,8 +844,8 @@ export class SchematicRenderer {
 
     // Draw component label upright above component in world coordinates
     ctx.save();
-    ctx.font = 'bold 10px "Segoe UI", sans-serif';
-    ctx.fillStyle = this.theme === 'light' ? '#0f172a' : '#cbd5e1';
+    ctx.font = 'bold 11px "Inter", sans-serif';
+    ctx.fillStyle = '#e2e8f0';
     const textLabel = comp.label || comp.partNumber || comp.name;
     if (textLabel) {
       ctx.fillText(textLabel, comp.x, comp.y - 6);
@@ -1010,30 +853,83 @@ export class SchematicRenderer {
     ctx.restore();
   }
 
+  // Magnetic terminal snap target ring (8px radius)
   drawPinSnap(pinInfo) {
     const ctx = this.ctx;
     const wpos = this.getPinWorldPos(pinInfo.comp, pinInfo.pin);
     const pos = this.worldToScreen(wpos.x, wpos.y);
+
     ctx.save();
-    ctx.strokeStyle = '#0284c7';
-    ctx.lineWidth = 2.5;
+    // Inner pulse ring
+    ctx.strokeStyle = '#0ea5e9';
+    ctx.lineWidth = 2.0;
     ctx.beginPath();
-    ctx.arc(pos.x, pos.y, 7, 0, Math.PI * 2);
+    ctx.arc(pos.x, pos.y, 8, 0, Math.PI * 2);
     ctx.stroke();
+
+    // Outer target ring
+    ctx.strokeStyle = 'rgba(14, 165, 233, 0.4)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(pos.x, pos.y, 14, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Crosshairs
+    ctx.strokeStyle = '#0ea5e9';
+    ctx.beginPath();
+    ctx.moveTo(pos.x - 14, pos.y);
+    ctx.lineTo(pos.x + 14, pos.y);
+    ctx.moveTo(pos.x, pos.y - 14);
+    ctx.lineTo(pos.x, pos.y + 14);
+    ctx.stroke();
+
     ctx.restore();
   }
 
   findPinAt(wx, wy) {
+    // 8-12px snap radius for magnetic snapping
     for (const comp of this.solver.components) {
       for (let pIdx = 0; pIdx < comp.pins.length; pIdx++) {
         const pin = comp.pins[pIdx];
         const wpos = this.getPinWorldPos(comp, pin);
-        if (Math.hypot(wx - wpos.x, wy - wpos.y) < 14) {
+        if (Math.hypot(wx - wpos.x, wy - wpos.y) <= 12) {
           return { comp, pin, pIdx };
         }
       }
     }
     return null;
+  }
+
+  findWireSegmentAt(wx, wy) {
+    const threshold = 6;
+    for (const wire of (this.wireSegments || [])) {
+      if (wire.x1 === wire.x2 || wire.y1 === wire.y2) {
+        if (this.isPointNearLine(wx, wy, wire.x1, wire.y1, wire.x2, wire.y2, threshold)) {
+          return { wire, segmentType: 'direct' };
+        }
+      } else {
+        // Z-Route 3 segments: (x1, y1)->(trunkX, y1), (trunkX, y1)->(trunkX, y2), (trunkX, y2)->(x2, y2)
+        if (this.isPointNearLine(wx, wy, wire.x1, wire.y1, wire.trunkX, wire.y1, threshold)) {
+          return { wire, segmentType: 'horizontal1' };
+        }
+        if (this.isPointNearLine(wx, wy, wire.trunkX, wire.y1, wire.trunkX, wire.y2, threshold)) {
+          return { wire, segmentType: 'vertical_trunk' };
+        }
+        if (this.isPointNearLine(wx, wy, wire.trunkX, wire.y2, wire.x2, wire.y2, threshold)) {
+          return { wire, segmentType: 'horizontal2' };
+        }
+      }
+    }
+    return null;
+  }
+
+  isPointNearLine(px, py, x1, y1, x2, y2, threshold) {
+    const distSq = (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1);
+    if (distSq === 0) return Math.hypot(px - x1, py - y1) <= threshold;
+    const t = Math.max(0, Math.min(1, ((px - x1) * (x2 - x1) + (py - y1) * (y2 - y1)) / distSq));
+    const projX = x1 + t * (x2 - x1);
+    const projY = y1 + t * (y2 - y1);
+    return Math.hypot(px - projX, py - projY) <= threshold;
   }
 
   findComponentAt(wx, wy) {
@@ -1093,7 +989,7 @@ export class SchematicRenderer {
     const offCtx = offCanvas.getContext('2d');
 
     offCtx.scale(2, 2);
-    offCtx.fillStyle = this.theme === 'light' ? '#ffffff' : '#090e17';
+    offCtx.fillStyle = '#11161d';
     offCtx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
     offCtx.save();
@@ -1107,6 +1003,7 @@ export class SchematicRenderer {
     for (const comp of this.solver.components) {
       this.drawComponent(comp);
     }
+    this.drawProbeBadges();
     this.ctx = oldCtx;
     offCtx.restore();
 

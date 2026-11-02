@@ -1,66 +1,35 @@
 /* ==========================================================================
-   Multisim Web - Professional Engineering UI & Theme Styling
-   Optimized for both NI Multisim Classic Light & Modern Dark Workspaces
+   Multisim Web Studio - Professional CAD/EDA Engineering Environment
+   Theme: Instrument Dark-Slate / Industrial Lab Aesthetic (2026 Edition)
    ========================================================================== */
 
 :root {
-  /* Dark Mode Palette (Default) */
-  --bg-app: #080d1a;
-  --bg-ribbon: #0f172a;
-  --bg-sidebar: #0f172a;
-  --bg-canvas: #090e17;
-  --bg-surface: #1e293b;
-  --bg-surface-hover: #334155;
-  --border-ui: #334155;
-  --border-focus: #38bdf8;
-  --text-main: #f8fafc;
+  /* Instrument Dark-Slate Palette */
+  --bg-app: #0e131a;
+  --bg-ribbon: #161d27;
+  --bg-sidebar: #131a23;
+  --bg-canvas: #11161d;
+  --bg-surface: #1a222e;
+  --bg-surface-hover: #242f3f;
+  --bg-active: #0ea5e920;
+  
+  --border-ui: #273244;
+  --border-subtle: #1e2633;
+  --border-focus: #0ea5e9;
+  
+  --text-main: #f1f5f9;
   --text-secondary: #cbd5e1;
-  --text-muted: #94a3b8;
-  --accent-primary: #0284c7;
-  --accent-cyan: #38bdf8;
-  --accent-green: #22c55e;
-  --accent-red: #ef4444;
+  --text-muted: #8292a6;
+  
+  /* Signal & Instrument Tones */
+  --accent-cyan: #0ea5e9;
   --accent-amber: #f59e0b;
-  --grid-dot: #334155;
-  --symbol-stroke: #f1f5f9;
-  --symbol-fill: #0f172a;
-  --pin-marker: #38bdf8;
-  --wire-default: #94a3b8;
-  --wire-pos: #ef4444;
-  --wire-neg: #38bdf8;
-  --wire-gnd: #22c55e;
-  --current-dot: #facc15;
-  --font-main: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-}
-
-[data-theme="light"] {
-  /* Classic NI Multisim Light Palette */
-  --bg-app: #f1f5f9;
-  --bg-ribbon: #ffffff;
-  --bg-sidebar: #ffffff;
-  --bg-canvas: #ffffff;
-  --bg-surface: #f8fafc;
-  --bg-surface-hover: #e2e8f0;
-  --border-ui: #cbd5e1;
-  --border-focus: #0284c7;
-  --text-main: #0f172a;
-  --text-secondary: #334155;
-  --text-muted: #64748b;
-  --accent-primary: #0284c7;
-  --accent-cyan: #0284c7;
-  --accent-green: #15803d;
-  --accent-red: #b91c1c;
-  --accent-amber: #b45309;
-  --grid-dot: #94a3b8;
-  --symbol-stroke: #0f172a;
-  --symbol-fill: #ffffff;
-  --pin-marker: #0284c7;
-  --wire-default: #0f172a;
-  --wire-pos: #dc2626;
-  --wire-neg: #2563eb;
-  --wire-gnd: #16a34a;
-  --current-dot: #d97706;
+  --accent-green: #10b981;
+  --accent-red: #ef4444;
+  --accent-blue: #3b82f6;
+  
+  --font-main: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Consolas, monospace;
 }
 
 * {
@@ -87,186 +56,266 @@ body {
   display: flex;
   flex-direction: column;
   z-index: 20;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
 .brand-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 6px 14px;
-  background-color: #0b1329;
-  color: #ffffff;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 5px 14px;
+  background-color: #0d1219;
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .brand-logo {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 14px;
+  gap: 8px;
   font-weight: 700;
-  letter-spacing: 0.5px;
+  font-size: 13px;
+  letter-spacing: 0.8px;
+  color: #f1f5f9;
 }
 
 .brand-badge {
-  background: linear-gradient(135deg, #0284c7, #2563eb);
-  color: #ffffff;
-  padding: 2px 7px;
-  border-radius: 4px;
+  background: rgba(14, 165, 233, 0.15);
+  color: #38bdf8;
   font-size: 10px;
-  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+  border: 1px solid rgba(14, 165, 233, 0.3);
 }
 
+.brand-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 11px;
+}
+
+.save-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 500;
+  font-size: 11px;
+  transition: all 0.2s ease;
+}
+
+.save-indicator.saved {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.save-indicator.dirty {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.engine-badge {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+/* Ribbon Controls Container */
 .ribbon-controls {
   display: flex;
   align-items: center;
-  padding: 6px 12px;
+  padding: 5px 12px;
   gap: 6px;
-  overflow-x: auto;
   background-color: var(--bg-ribbon);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.ribbon-controls::-webkit-scrollbar {
+  display: none;
 }
 
 .ribbon-group {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 0 8px;
-  border-right: 1px solid var(--border-ui);
+  position: relative;
 }
 
-.ribbon-group:last-child {
-  border-right: none;
+.ribbon-separator {
+  width: 1px;
+  height: 24px;
+  background-color: var(--border-ui);
+  margin: 0 4px;
+  flex-shrink: 0;
 }
 
+.group-label {
+  display: none; /* Accessible attribute */
+}
+
+/* Ribbon Buttons */
 .ribbon-btn {
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border-ui);
-  border-radius: 4px;
-  color: var(--text-main);
-  padding: 5px 9px;
-  font-size: 12px;
-  font-weight: 600;
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 5px;
+  border: 1px solid var(--border-ui);
+  background-color: var(--bg-surface);
+  color: var(--text-secondary);
+  font-family: var(--font-main);
+  font-size: 12px;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.12s ease;
   white-space: nowrap;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
 }
 
-.ribbon-btn:hover {
+.ribbon-btn:hover:not(.disabled) {
   background-color: var(--bg-surface-hover);
-  border-color: var(--border-focus);
-  color: var(--accent-cyan);
+  color: var(--text-main);
+  border-color: #3b4b63;
 }
 
-.ribbon-btn:active, .ribbon-btn.active {
-  background-color: var(--accent-primary);
-  color: #ffffff;
-  border-color: var(--accent-primary);
+.ribbon-btn:active:not(.disabled) {
+  transform: translateY(1px);
 }
 
+.ribbon-btn.icon-btn {
+  padding: 0 8px;
+}
+
+.ribbon-btn.disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Active Tool highlight */
+.ribbon-btn.active {
+  background-color: rgba(14, 165, 233, 0.18);
+  border-color: var(--accent-cyan);
+  color: #38bdf8;
+  box-shadow: 0 0 8px rgba(14, 165, 233, 0.25);
+}
+
+/* Simulation Controls */
 .ribbon-btn.sim-run {
-  background-color: #15803d;
-  color: #ffffff;
-  font-weight: 700;
-  border-color: #166534;
+  background-color: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.4);
+  color: #34d399;
 }
 
 .ribbon-btn.sim-run:hover {
-  background-color: #16a34a;
+  background-color: rgba(16, 185, 129, 0.25);
+  border-color: var(--accent-green);
+  color: #ffffff;
 }
 
 .ribbon-btn.sim-run.running {
-  background-color: #22c55e;
-  box-shadow: 0 0 10px rgba(34, 197, 94, 0.6);
-  animation: pulse-green 1.5s infinite;
-}
-
-@keyframes pulse-green {
-  0% { box-shadow: 0 0 4px rgba(34, 197, 94, 0.4); }
-  50% { box-shadow: 0 0 14px rgba(34, 197, 94, 0.8); }
-  100% { box-shadow: 0 0 4px rgba(34, 197, 94, 0.4); }
+  background-color: var(--accent-green);
+  border-color: var(--accent-green);
+  color: #ffffff;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
 }
 
 .ribbon-btn.sim-stop {
-  background-color: #b91c1c;
-  color: #ffffff;
-  border-color: #991b1b;
+  color: #f87171;
 }
 
 .ribbon-btn.sim-stop:hover {
-  background-color: #dc2626;
-}
-
-.ribbon-btn.btn-export {
-  background-color: #0369a1;
+  background-color: rgba(239, 68, 68, 0.2);
+  border-color: var(--accent-red);
   color: #ffffff;
-  border-color: #0284c7;
 }
 
-.ribbon-btn.btn-export:hover {
-  background-color: #0284c7;
+/* Functional Save Button */
+.ribbon-btn.btn-save {
+  border-color: rgba(14, 165, 233, 0.4);
+  color: #38bdf8;
+}
+
+.ribbon-btn.btn-save:hover {
+  background-color: rgba(14, 165, 233, 0.2);
+  border-color: var(--accent-cyan);
 }
 
 /* ================= Workspace Layout ================= */
 .multisim-workspace {
-  display: flex;
   flex: 1;
+  display: flex;
   position: relative;
   overflow: hidden;
 }
 
-/* ================= Component Sidebar ================= */
+/* Left Sidebar - Component Catalog */
 .component-sidebar {
-  width: 300px;
+  width: 250px;
   background-color: var(--bg-sidebar);
   border-right: 1px solid var(--border-ui);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
   z-index: 10;
+}
+
+.sidebar-header {
+  padding: 9px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-ui);
+  background-color: #0f151d;
 }
 
 .sidebar-search-box {
   padding: 8px 10px;
   border-bottom: 1px solid var(--border-ui);
-  background-color: var(--bg-surface);
 }
 
 .search-input {
   width: 100%;
-  padding: 6px 10px;
-  background-color: var(--bg-canvas);
+  background-color: var(--bg-app);
   border: 1px solid var(--border-ui);
   border-radius: 4px;
   color: var(--text-main);
+  padding: 6px 10px;
   font-size: 12px;
-  font-family: inherit;
   outline: none;
+  font-family: var(--font-main);
+  transition: border-color 0.15s ease;
 }
 
 .search-input:focus {
-  border-color: var(--border-focus);
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 6px rgba(14, 165, 233, 0.2);
 }
 
 .category-tabs {
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
   flex: 1;
+  overflow-y: auto;
+  padding: 6px 8px;
 }
 
 .category-group-header {
-  padding: 8px 12px;
+  padding: 8px 10px;
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  background-color: var(--bg-surface);
-  color: var(--accent-cyan);
-  border-top: 1px solid var(--border-ui);
-  border-bottom: 1px solid var(--border-ui);
+  color: var(--text-secondary);
+  background-color: #161e2a;
+  border: 1px solid var(--border-ui);
+  border-radius: 4px;
+  margin-top: 6px;
   cursor: pointer;
   display: flex;
   justify-content: space-between;
@@ -275,118 +324,120 @@ body {
 
 .category-group-header:hover {
   background-color: var(--bg-surface-hover);
+  color: var(--text-main);
 }
 
 .component-list-items {
   display: flex;
   flex-direction: column;
-  background-color: var(--bg-sidebar);
+  gap: 3px;
+  padding: 4px 0 4px 6px;
 }
 
 .catalog-item-btn {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  padding: 7px 12px;
-  border: none;
-  background: transparent;
-  color: var(--text-main);
+  align-items: center;
+  padding: 6px 10px;
+  background-color: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: var(--text-secondary);
   font-size: 12px;
-  text-align: left;
   cursor: pointer;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-  transition: all 0.12s;
+  text-align: left;
+  transition: all 0.15s ease;
 }
 
 .catalog-item-btn:hover {
-  background-color: var(--bg-surface-hover);
-  color: var(--accent-primary);
-  padding-left: 15px;
+  background-color: var(--bg-surface);
+  border-color: var(--border-ui);
+  color: #38bdf8;
 }
 
 .catalog-item-part {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 10px;
   color: var(--text-muted);
-  font-weight: 600;
 }
 
-/* ================= Canvas Viewport ================= */
+/* Center Canvas Viewport */
 .schematic-viewport {
   flex: 1;
   position: relative;
   background-color: var(--bg-canvas);
-  cursor: crosshair;
   overflow: hidden;
+  cursor: crosshair;
 }
 
 #schematicCanvas {
-  position: absolute;
-  top: 0;
-  left: 0;
+  display: block;
   width: 100%;
   height: 100%;
 }
 
 .canvas-floating-controls {
   position: absolute;
-  top: 12px;
-  right: 12px;
+  bottom: 16px;
+  right: 16px;
   display: flex;
-  flex-direction: column;
   gap: 6px;
-  background-color: var(--bg-ribbon);
-  padding: 6px;
+  background-color: rgba(22, 29, 39, 0.85);
+  backdrop-filter: blur(8px);
+  padding: 4px;
   border-radius: 6px;
   border: 1px solid var(--border-ui);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
 .float-btn {
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border-ui);
-  color: var(--text-main);
-  padding: 6px;
-  border-radius: 4px;
-  cursor: pointer;
+  width: 30px;
+  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-ui);
+  border-radius: 4px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
 }
 
 .float-btn:hover {
-  background-color: var(--accent-primary);
-  color: #ffffff;
+  background-color: var(--bg-surface-hover);
+  color: var(--text-main);
+  border-color: var(--accent-cyan);
 }
 
-/* ================= Right Instruments Drawer ================= */
+/* Right Instruments Drawer */
 .instruments-drawer {
-  width: 380px;
+  width: 360px;
   background-color: var(--bg-sidebar);
   border-left: 1px solid var(--border-ui);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
   z-index: 10;
 }
 
 .drawer-tabs {
   display: flex;
-  background-color: var(--bg-surface);
   border-bottom: 1px solid var(--border-ui);
+  background-color: #0f151d;
 }
 
 .tab-btn {
   flex: 1;
-  background: transparent;
+  padding: 8px 6px;
+  background-color: transparent;
   border: none;
-  color: var(--text-muted);
-  padding: 9px 8px;
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-  text-align: center;
   border-bottom: 2px solid transparent;
-  transition: all 0.15s;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
 }
 
 .tab-btn:hover {
@@ -396,7 +447,7 @@ body {
 .tab-btn.active {
   color: var(--accent-cyan);
   border-bottom-color: var(--accent-cyan);
-  background-color: var(--bg-sidebar);
+  background-color: rgba(14, 165, 233, 0.08);
 }
 
 .drawer-content {
@@ -408,97 +459,151 @@ body {
   gap: 12px;
 }
 
-/* Oscilloscope */
+/* Oscilloscope CRT & Screen */
 .scope-screen-wrapper {
-  background-color: #04080e;
-  border: 2px solid #334155;
+  background-color: #0a1017;
+  border: 1px solid var(--border-ui);
   border-radius: 6px;
-  padding: 4px;
-  box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.8);
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.8);
 }
 
 #scopeCanvas {
-  width: 100%;
-  height: 200px;
   display: block;
 }
 
-.scope-controls-grid {
+/* Oscilloscope Metrics Bar */
+.scope-metrics-bar {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
-  font-size: 11px;
+}
+
+.metric-card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-ui);
+  border-radius: 6px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.metric-card.metric-cha {
+  border-left: 3px solid var(--accent-cyan);
+}
+
+.metric-card.metric-chb {
+  border-left: 3px solid var(--accent-amber);
+}
+
+.metric-title {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.metric-cha .metric-title { color: var(--accent-cyan); }
+.metric-chb .metric-title { color: var(--accent-amber); }
+
+.metric-val {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.metric-sub {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+/* Scope Controls Grid */
+.scope-controls-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .scope-control-card {
   background-color: var(--bg-surface);
   border: 1px solid var(--border-ui);
-  border-radius: 4px;
-  padding: 8px;
+  border-radius: 6px;
+  padding: 10px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .control-label {
+  font-size: 11px;
   font-weight: 700;
-  color: var(--accent-cyan);
-  display: flex;
-  justify-content: space-between;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .control-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
 }
 
-.scope-select, .scope-input {
-  background-color: var(--bg-canvas);
+.scope-select {
+  background-color: var(--bg-app);
   border: 1px solid var(--border-ui);
-  color: var(--text-main);
-  padding: 4px 6px;
   border-radius: 4px;
+  color: var(--text-main);
+  padding: 4px 8px;
   font-size: 11px;
   outline: none;
-  width: 90px;
+  cursor: pointer;
+  font-family: var(--font-mono);
+}
+
+.scope-select:focus {
+  border-color: var(--accent-cyan);
 }
 
 /* Digital Multimeter Display */
 .dmm-chassis {
-  background: linear-gradient(180deg, #d97706, #b45309);
-  border: 3px solid #78350f;
+  background-color: #17202c;
+  border: 2px solid #2d3b4e;
   border-radius: 8px;
   padding: 12px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .dmm-lcd-screen {
-  background-color: #09130d;
-  border: 2px solid #040a06;
+  background-color: #0b1118;
+  border: 1px solid #263345;
   border-radius: 4px;
-  padding: 12px 14px;
-  margin-bottom: 12px;
+  padding: 16px 12px;
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.8);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.6);
 }
 
 .dmm-main-digits {
   font-family: var(--font-mono);
   font-size: 26px;
   font-weight: 700;
-  color: #4ade80;
-  text-shadow: 0 0 10px rgba(74, 222, 128, 0.6);
-  letter-spacing: 1px;
+  color: #38bdf8;
+  letter-spacing: 1.5px;
 }
 
 .dmm-mode-badge {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: #86efac;
+  font-size: 11px;
+  font-weight: 700;
+  color: #8292a6;
 }
 
 .dmm-mode-selector {
@@ -508,149 +613,70 @@ body {
 }
 
 .dmm-mode-btn {
-  background-color: #1e293b;
-  border: 1px solid #334155;
-  color: #f8fafc;
-  padding: 7px 4px;
-  font-size: 11px;
-  font-weight: 700;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-ui);
   border-radius: 4px;
+  color: var(--text-secondary);
+  padding: 6px;
+  font-size: 11px;
+  font-weight: 600;
   cursor: pointer;
-  text-align: center;
+  transition: all 0.15s ease;
+}
+
+.dmm-mode-btn:hover {
+  background-color: var(--bg-surface-hover);
+  color: var(--text-main);
 }
 
 .dmm-mode-btn.active {
-  background-color: #ffffff;
-  color: #0f172a;
-  border-color: #ffffff;
+  background-color: rgba(14, 165, 233, 0.2);
+  border-color: var(--accent-cyan);
+  color: #38bdf8;
 }
 
-/* Property Inspector */
+/* Property Inspector Table */
 .inspector-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 12px;
 }
 
-.inspector-table tr {
-  border-bottom: 1px solid var(--border-ui);
-}
-
 .inspector-table td {
   padding: 6px 4px;
-}
-
-.inspector-table td:first-child {
-  color: var(--text-muted);
-  width: 42%;
-  font-weight: 600;
+  border-bottom: 1px solid var(--border-ui);
+  color: var(--text-secondary);
 }
 
 .inspector-input {
   width: 100%;
-  background-color: var(--bg-canvas);
+  background-color: var(--bg-app);
   border: 1px solid var(--border-ui);
+  border-radius: 4px;
   color: var(--text-main);
   padding: 4px 6px;
-  border-radius: 4px;
-  font-size: 11px;
-}
-
-/* ================= Modal Template Picker ================= */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-color: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-}
-
-.modal-dialog {
-  background-color: var(--bg-ribbon);
-  border: 1px solid var(--border-ui);
-  border-radius: 8px;
-  width: 560px;
-  max-width: 90vw;
-  max-height: 80vh;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-}
-
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--border-ui);
-}
-
-.modal-title {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--text-main);
-}
-
-.modal-close-btn {
-  background: transparent;
-  border: none;
-  color: var(--text-muted);
-  font-size: 18px;
-  cursor: pointer;
-}
-
-.modal-body {
-  padding: 12px 16px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.template-card {
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border-ui);
-  border-radius: 6px;
-  padding: 10px 14px;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  transition: all 0.15s;
-}
-
-.template-card:hover {
-  border-color: var(--accent-cyan);
-  background-color: var(--bg-surface-hover);
-}
-
-.template-name {
-  font-weight: 700;
-  font-size: 13px;
-  color: var(--accent-cyan);
-}
-
-.template-desc {
-  font-size: 11px;
-  color: var(--text-muted);
-}
-
-/* ================= Bottom Status Bar ================= */
-.multisim-statusbar {
-  background-color: #0b1329;
-  border-top: 1px solid var(--border-ui);
-  padding: 5px 14px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 11px;
-  color: #cbd5e1;
+  font-size: 12px;
   font-family: var(--font-mono);
+  outline: none;
+}
+
+.inspector-input:focus {
+  border-color: var(--accent-cyan);
+}
+
+/* Bottom Status Bar */
+.multisim-statusbar {
+  height: 24px;
+  background-color: #0b1016;
+  border-top: 1px solid var(--border-ui);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  z-index: 20;
 }
 
 .status-group {
@@ -660,15 +686,15 @@ body {
 }
 
 .status-indicator {
-  display: inline-block;
   width: 8px;
   height: 8px;
   border-radius: 50%;
   background-color: #64748b;
-  margin-right: 6px;
+  display: inline-block;
+  margin-right: 4px;
 }
 
 .status-indicator.active {
-  background-color: #22c55e;
-  box-shadow: 0 0 6px #22c55e;
+  background-color: var(--accent-green);
+  box-shadow: 0 0 6px var(--accent-green);
 }
