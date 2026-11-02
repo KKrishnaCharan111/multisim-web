@@ -1,5 +1,10 @@
 # Multisim Web - Interactive Electronics Circuit Simulator
 
+[![Live Demo](https://img.shields.io/badge/Live_Demo-Open_Multisim_Web-0284c7?style=for-the-badge&logo=google-chrome&logoColor=white)](https://kkrishnacharan111.github.io/multisim-web/)
+[![GitHub Pages](https://img.shields.io/badge/GitHub_Pages-Active-22c55e?style=for-the-badge&logo=github)](https://kkrishnacharan111.github.io/multisim-web/)
+
+> 🚀 **Live Web Application**: [https://kkrishnacharan111.github.io/multisim-web/](https://kkrishnacharan111.github.io/multisim-web/)
+
 A high-fidelity, interactive web application replica of **NI Multisim** featuring a complete electronics component catalog, Modified Nodal Analysis (MNA) & transient SPICE-like simulation engine, dynamic current flow animations, interactive controls, and an instrument rack (4-Channel Oscilloscope, Digital Multimeter, and Property Inspector).
 
 ---
