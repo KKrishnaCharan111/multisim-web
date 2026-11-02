@@ -103,21 +103,45 @@ export class MNACircuitSolver {
 
   buildNodeMap() {
     const nodeSet = new Set();
-    nodeSet.add(this.groundNodeId);
+    let hasExplicitGround = false;
 
     for (const comp of this.components) {
       for (const pin of comp.pins) {
         if (pin.netId) {
           nodeSet.add(pin.netId);
+          if (pin.netId === this.groundNodeId) {
+            hasExplicitGround = true;
+          }
         }
+      }
+    }
+
+    // Auto-Ground Fallback: If circuit has connected nodes but no node named 'GND',
+    // designate the first connected net or negative source pin as reference ground (index 0)
+    let autoRefNet = null;
+    if (!hasExplicitGround && nodeSet.size > 0) {
+      for (const comp of this.components) {
+        if (['DC_POWER', 'AC_POWER', 'SINE_GEN', 'DIGITAL_CLOCK'].includes(comp.type)) {
+          if (comp.pins[1] && comp.pins[1].netId) {
+            autoRefNet = comp.pins[1].netId;
+            break;
+          }
+        }
+      }
+      if (!autoRefNet) {
+        autoRefNet = nodeSet.values().next().value;
       }
     }
 
     this.nodeMap = new Map();
     this.nodeMap.set(this.groundNodeId, 0);
+    if (autoRefNet) {
+      this.nodeMap.set(autoRefNet, 0);
+    }
+
     let index = 1;
     for (const netId of nodeSet) {
-      if (netId !== this.groundNodeId) {
+      if (netId !== this.groundNodeId && netId !== autoRefNet) {
         this.nodeMap.set(netId, index++);
       }
     }

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,139 +13,126 @@
 
   <!-- Top Ribbon & Navigation -->
   <header class="multisim-header">
-    <div class="brand-bar">
+    <!-- Left Section: Logo & Single Clean File Dropdown -->
+    <div class="brand-section">
       <div class="brand-logo">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
         </svg>
-        <span>MULTISIM WEB STUDIO</span>
-        <span class="brand-badge">CAD / EDA LAB</span>
+        <span>MULTISIM WEB</span>
+        <span class="brand-badge">STUDIO</span>
       </div>
-      <div class="brand-meta">
-        <span id="saveStatusIndicator" class="save-indicator saved">● Circuit Saved</span>
-        <span class="engine-badge">MNA SPICE Engine</span>
+
+      <!-- Single File Dropdown Option -->
+      <div class="dropdown-wrapper">
+        <button id="btnFileMenu" class="ribbon-btn" title="File & Export Operations">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+          <span>File ▾</span>
+        </button>
+
+        <div id="fileDropdown" class="dropdown-menu">
+          <button id="btnNew" class="dropdown-item">
+            <div class="dropdown-item-left">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+              <span>New Circuit</span>
+            </div>
+          </button>
+          <button id="btnOpen" class="dropdown-item">
+            <div class="dropdown-item-left">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+              <span>Open File...</span>
+            </div>
+          </button>
+          <input type="file" id="fileInput" accept=".json,.ms14,.msm" style="display: none;">
+          <div class="dropdown-divider"></div>
+          <button id="btnSaveCircuit" class="dropdown-item">
+            <div class="dropdown-item-left">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+              <span>Save Circuit</span>
+            </div>
+            <span class="dropdown-item-key">Ctrl+S</span>
+          </button>
+          <button id="btnSave" class="dropdown-item">
+            <div class="dropdown-item-left">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+              <span>Export .ms14 File</span>
+            </div>
+          </button>
+          <div class="dropdown-divider"></div>
+          <button id="btnExportImage" class="dropdown-item">
+            <div class="dropdown-item-left">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+              <span>Export Image (PNG)</span>
+            </div>
+          </button>
+          <button id="btnExportNetlist" class="dropdown-item">
+            <div class="dropdown-item-left">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+              <span>Export SPICE Netlist (.cir)</span>
+            </div>
+          </button>
+        </div>
       </div>
     </div>
 
-    <div class="ribbon-controls">
-      <!-- 1. File Group -->
-      <div class="ribbon-group" data-group="file">
-        <div class="group-label">File</div>
-        <button id="btnNew" class="ribbon-btn" title="Create New Blank Circuit">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
-          <span>New</span>
-        </button>
-        <button id="btnOpen" class="ribbon-btn" title="Open Saved Circuit (.ms14, .json)">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
-          <span>Open</span>
-        </button>
-        <input type="file" id="fileInput" accept=".json,.ms14,.msm" style="display: none;">
-        
-        <!-- Fully functional Save Button -->
-        <button id="btnSaveCircuit" class="ribbon-btn btn-save" title="Save Circuit Configuration (Ctrl+S)">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-          <span>Save</span>
-        </button>
+    <!-- Center Section: Clean Tools & Prominent Big Output Button -->
+    <div class="ribbon-center">
+      <button id="toolSelect" class="ribbon-btn active" title="Select Tool (S / Esc)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l7 18 3-7 7-3L3 3z"></path></svg>
+        <span>Select</span>
+      </button>
+      <button id="toolWire" class="ribbon-btn" title="Manhattan Wire Tool (W)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="4" cy="5" r="2.5"></circle><circle cx="20" cy="19" r="2.5"></circle><path d="M4 7.5v6.5a2 2 0 0 0 2 2h11.5"></path></svg>
+        <span>Wire</span>
+      </button>
+      <button id="toolProbe" class="ribbon-btn" title="Oscilloscope Probe Tool (P)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00f0ff" stroke-width="2"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 3"></path></svg>
+        <span>Probe</span>
+      </button>
+      <button id="btnRotate" class="ribbon-btn" title="Rotate Selected Component (R)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+        <span>Rotate</span>
+      </button>
+      <button id="btnDelete" class="ribbon-btn" title="Delete Selected (Delete)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+      </button>
 
-        <button id="btnSave" class="ribbon-btn" title="Save / Export Circuit File (.ms14)">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-          <span>Save .ms14</span>
-        </button>
-      </div>
+      <!-- Prominent Big Live Output & Graph View Button -->
+      <button id="btnOpenBigScope" class="ribbon-btn btn-big-output" title="Open Large Live Oscilloscope & Signal Analyzer Screen">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+        <span>📈 Live Output (Big Graph)</span>
+      </button>
 
-      <div class="ribbon-separator"></div>
+      <!-- Theme Switcher: Classic Light Lab / Dark Studio -->
+      <button id="btnToggleTheme" class="ribbon-btn" title="Switch Theme (Light / Dark)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="themeIcon"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+        <span id="themeBtnText">Light Theme</span>
+      </button>
 
-      <!-- 2. Export Group -->
-      <div class="ribbon-group" data-group="export">
-        <div class="group-label">Export</div>
-        <button id="btnExportImage" class="ribbon-btn" title="Download High-Resolution PNG Image of Schematic">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-          <span>Download Image (PNG)</span>
-        </button>
-        <button id="btnExportNetlist" class="ribbon-btn" title="Download Standard SPICE Netlist (.cir)">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
-          <span>Download SPICE (.cir)</span>
-        </button>
-      </div>
+      <button id="btnToggleCurrent" class="ribbon-btn active" title="Toggle Current Charges">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+      </button>
+      <button id="btnToggleAudio" class="ribbon-btn active" title="Toggle Sound">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="audioIcon"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
+      </button>
+    </div>
 
-      <div class="ribbon-separator"></div>
-
-      <!-- 3. Simulation Controls -->
-      <div class="ribbon-group" data-group="simulation">
-        <div class="group-label">Simulation</div>
-        <button id="btnRun" class="ribbon-btn sim-run running" title="Run / Resume Simulation (F5)">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+    <!-- Right Section: Simulation Controls Grouped on One Side -->
+    <div class="ribbon-right">
+      <div class="sim-group">
+        <button id="btnRun" class="ribbon-btn sim-run running" title="Run Simulation (F5)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
           <span>Run</span>
         </button>
-        <button id="btnPause" class="ribbon-btn" title="Pause Simulation">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
-          <span>Pause</span>
+        <button id="btnPause" class="ribbon-btn" title="Pause">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
         </button>
-        <button id="btnStep" class="ribbon-btn" title="Single Timestep (F10)">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 17 18 12 13 7"></polyline><polyline points="6 17 11 12 6 7"></polyline></svg>
-          <span>Step</span>
+        <button id="btnStep" class="ribbon-btn" title="Step (F10)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="13 17 18 12 13 7"></polyline><polyline points="6 17 11 12 6 7"></polyline></svg>
         </button>
         <button id="btnStop" class="ribbon-btn sim-stop" title="Reset Circuit">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16"></rect></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16"></rect></svg>
           <span>Stop</span>
-        </button>
-      </div>
-
-      <div class="ribbon-separator"></div>
-
-      <!-- 4. Tools -->
-      <div class="ribbon-group" data-group="tools">
-        <div class="group-label">Tools</div>
-        <button id="toolSelect" class="ribbon-btn active" title="Select / Move Tool (S / Esc)">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l7 18 3-7 7-3L3 3z"></path></svg>
-          <span>Select</span>
-        </button>
-        <button id="toolWire" class="ribbon-btn" title="Orthogonal Manhattan Wire Placement (W)">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="4" cy="5" r="2.5"></circle><circle cx="20" cy="19" r="2.5"></circle><path d="M4 7.5v6.5a2 2 0 0 0 2 2h11.5"></path></svg>
-          <span>Wire</span>
-        </button>
-        <button id="toolProbe" class="ribbon-btn" title="Oscilloscope Clip Probe (Click to attach CH A / CH B)">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 3"></path></svg>
-          <span>Probe</span>
-        </button>
-      </div>
-
-      <div class="ribbon-separator"></div>
-
-      <!-- 5. Edit Group -->
-      <div class="ribbon-group" data-group="edit">
-        <div class="group-label">Edit</div>
-        <button id="btnUndo" class="ribbon-btn icon-btn disabled" title="Undo Last Action (Ctrl+Z)">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"></path><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path></svg>
-        </button>
-        <button id="btnRedo" class="ribbon-btn icon-btn disabled" title="Redo Last Action (Ctrl+Y)">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7v6h-6"></path><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"></path></svg>
-        </button>
-        <button id="btnRotate" class="ribbon-btn" title="Rotate Selected Component 90° Clockwise (R)">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
-          <span>Rotate 90°</span>
-        </button>
-        <button id="btnDelete" class="ribbon-btn" title="Delete Selected Item (Delete / Backspace)">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-          <span>Delete</span>
-        </button>
-        <button id="btnClear" class="ribbon-btn icon-btn" title="Clear Entire Canvas">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"></path><path d="M19 9l-4-4L3 17v4h4L19 9z"></path></svg>
-        </button>
-      </div>
-
-      <div class="ribbon-separator"></div>
-
-      <!-- 6. View & Audio Group -->
-      <div class="ribbon-group" data-group="view">
-        <div class="group-label">View & Audio</div>
-        <button id="btnToggleCurrent" class="ribbon-btn active" title="Toggle Animated Electron Current Flow">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
-          <span>Current Flow</span>
-        </button>
-        <button id="btnToggleAudio" class="ribbon-btn active" title="Toggle Procedural Lab Audio Effects">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="audioIcon"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
-          <span id="audioBtnText">Audio ON</span>
         </button>
       </div>
     </div>
@@ -153,10 +140,9 @@
 
   <!-- Workspace Container -->
   <div class="multisim-workspace">
-    
     <!-- Left Component Catalog Sidebar -->
     <aside class="component-sidebar">
-      <div class="sidebar-header">COMPONENT CATALOG</div>
+      <div class="sidebar-header">COMPONENTS</div>
       <div class="sidebar-search-box">
         <input type="text" id="componentSearch" class="search-input" placeholder="Search (e.g. BC547, LM358, 2.3k, 1N4007)...">
       </div>
@@ -186,15 +172,16 @@
     <!-- Right Instruments Drawer -->
     <aside class="instruments-drawer">
       <div class="drawer-tabs">
-        <button class="tab-btn active" data-tab="oscilloscope">Graph / Oscilloscope</button>
-        <button class="tab-btn" data-tab="multimeter">Digital Multimeter</button>
-        <button class="tab-btn" data-tab="inspector">Component Properties</button>
+        <button class="tab-btn active" data-tab="oscilloscope">Oscilloscope</button>
+        <button class="tab-btn" data-tab="multimeter">Multimeter</button>
+        <button class="tab-btn" data-tab="inspector">Properties</button>
       </div>
 
       <!-- Tab Content: Oscilloscope / Graph -->
       <div class="drawer-content" id="tabContentOscilloscope">
         <div class="scope-screen-wrapper">
-          <canvas id="scopeCanvas" width="350" height="200"></canvas>
+          <canvas id="scopeCanvas" width="340" height="190"></canvas>
+          <button id="btnExpandScopeSmall" class="btn-expand-scope" title="Open Big Screen Oscilloscope">⛶ Expand</button>
         </div>
 
         <!-- Live Signal Metrics Readout Panel -->
@@ -202,12 +189,12 @@
           <div class="metric-card metric-cha">
             <span class="metric-title">CH A (Cyan)</span>
             <div class="metric-val" id="metricChAVpp">Vpp: 0.00 V</div>
-            <div class="metric-sub" id="metricChAFreq">Freq: 0.0 Hz | RMS: 0.00 V</div>
+            <div class="metric-sub" id="metricChAFreq">Freq: 0.0 Hz</div>
           </div>
           <div class="metric-card metric-chb">
             <span class="metric-title">CH B (Amber)</span>
             <div class="metric-val" id="metricChBVpp">Vpp: 0.00 V</div>
-            <div class="metric-sub" id="metricChBFreq">Freq: 0.0 Hz | RMS: 0.00 V</div>
+            <div class="metric-sub" id="metricChBFreq">Freq: 0.0 Hz</div>
           </div>
         </div>
 
@@ -231,32 +218,13 @@
             </div>
             <div class="control-row">
               <label><input type="checkbox" id="scopeCursors"> Cursors</label>
-              <button id="scopeAutoSet" class="ribbon-btn" style="padding: 2px 6px;">Auto Set</button>
-            </div>
-          </div>
-
-          <!-- Trigger -->
-          <div class="scope-control-card">
-            <div class="control-label">Trigger</div>
-            <div class="control-row">
-              <span>Source</span>
-              <select id="scopeTrigSource" class="scope-select">
-                <option value="chA">CH A</option>
-                <option value="chB">CH B</option>
-              </select>
-            </div>
-            <div class="control-row">
-              <span>Slope</span>
-              <select id="scopeTrigSlope" class="scope-select">
-                <option value="rising">Rising ↑</option>
-                <option value="falling">Falling ↓</option>
-              </select>
+              <button id="scopeAutoSet" class="ribbon-btn" style="padding: 2px 6px; height: 24px; font-size: 10px;">Auto Set</button>
             </div>
           </div>
 
           <!-- Channel A -->
-          <div class="scope-control-card" style="border-left: 3px solid #0ea5e9;">
-            <div class="control-label" style="color: #0ea5e9;">CH A (Cyan)</div>
+          <div class="scope-control-card" style="border-left: 3px solid #00f0ff;">
+            <div class="control-label" style="color: #00f0ff;">CH A (Cyan)</div>
             <div class="control-row">
               <span>Volts/Div</span>
               <select id="scopeVoltsChA" class="scope-select">
@@ -278,8 +246,8 @@
           </div>
 
           <!-- Channel B -->
-          <div class="scope-control-card" style="border-left: 3px solid #f59e0b;">
-            <div class="control-label" style="color: #f59e0b;">CH B (Amber)</div>
+          <div class="scope-control-card" style="border-left: 3px solid #ffb700;">
+            <div class="control-label" style="color: #ffb700;">CH B (Amber)</div>
             <div class="control-row">
               <span>Volts/Div</span>
               <select id="scopeVoltsChB" class="scope-select">
@@ -309,7 +277,6 @@
             <div class="dmm-main-digits" id="dmmDisplay">0.000 V</div>
             <div class="dmm-mode-badge" id="dmmBadge">V DC</div>
           </div>
-
           <div class="dmm-mode-selector">
             <button class="dmm-mode-btn active" data-mode="VDC">V DC</button>
             <button class="dmm-mode-btn" data-mode="VAC">V AC</button>
@@ -346,6 +313,35 @@
         </div>
       </div>
     </aside>
+  </div>
+
+  <!-- Big Studio Oscilloscope & Signal Analyzer Modal -->
+  <div id="bigScopeModal" class="big-scope-modal">
+    <div class="big-scope-chassis">
+      <div class="big-scope-header">
+        <div class="big-scope-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00f0ff" stroke-width="2.2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+          <span>LARGE STUDIO OSCILLOSCOPE & SIGNAL ANALYZER</span>
+        </div>
+        <button id="btnCloseBigScope" class="ribbon-btn" style="height: 26px; padding: 0 8px;">✕ Close View</button>
+      </div>
+
+      <div class="big-scope-screen-box">
+        <canvas id="bigScopeCanvas" width="920" height="420"></canvas>
+      </div>
+
+      <div class="big-scope-footer">
+        <div class="big-scope-stats">
+          <div class="big-stat-cha" id="bigStatChA">CH A: Vpp = 0.00V | Freq = 0.0 Hz | RMS = 0.00V</div>
+          <div class="big-stat-chb" id="bigStatChB">CH B: Vpp = 0.00V | Freq = 0.0 Hz | RMS = 0.00V</div>
+        </div>
+        <div class="big-scope-actions">
+          <button id="btnBigAutoScale" class="ribbon-btn" style="background: rgba(14, 165, 233, 0.2); border-color: #0ea5e9; color: #38bdf8;">
+            ⚡ Auto-Scale Waveform
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Bottom Status Bar -->

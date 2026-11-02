@@ -1,12 +1,12 @@
 /**
  * Multisim Web Studio - Schematic Canvas Renderer & Interactive Wiring System
- * Professional CAD/EDA Engineering Environment:
- * - Instrument Dark-Slate Palette (#11161d background, #1c2533 technical grid)
- * - Orthogonal Manhattan Wire Router (90° corner routing with segment offset dragging)
- * - Magnetic Terminal Snapping with Prominent Target Rings (8px radius)
- * - Standardized Automatic Solder Junction Dots
- * - Interactive Oscilloscope Probe Badging ([CH A] Cyan, [CH B] Amber)
- * - High-Res PNG Schematic Export
+ * - Accurate Light Theme (Classic NI Multisim pure white #ffffff & jet-black #0f172a)
+ *   and Dark Theme (Instrument Dark-Slate #11161d)
+ * - Rock-solid Magnetic Terminal Snapping (24px radius)
+ * - Manhattan Orthogonal Wiring (90° corner routing with segment offsets)
+ * - Solder Junction Dots (4.5px filled dots)
+ * - Real-Time Voltage Wire Coloring & Animated Current Flow
+ * - Dual-Channel Oscilloscope Probe Badging ([CH A] Cyan, [CH B] Amber)
  */
 
 export class SchematicRenderer {
@@ -20,13 +20,13 @@ export class SchematicRenderer {
     this.panY = 60;
     this.gridSize = 20;
 
+    this.theme = 'dark'; // 'dark' or 'light'
     this.selectedComponent = null;
     this.hoveredPin = null;
-    this.hoveredWireSegment = null;
     this.isWiring = false;
     this.wireStartPin = null;
     this.mouseWorldPos = { x: 0, y: 0 };
-    this.wireSegments = [];
+    this.wires = []; // Explicit wires from MultisimApp
 
     this.showCurrentFlow = true;
     this.currentDotOffset = 0;
@@ -34,6 +34,11 @@ export class SchematicRenderer {
 
     this.smokeParticles = [];
     this.lastFrameTime = performance.now();
+  }
+
+  setTheme(theme) {
+    this.theme = theme === 'light' ? 'light' : 'dark';
+    this.render();
   }
 
   screenToWorld(sx, sy) {
@@ -56,6 +61,7 @@ export class SchematicRenderer {
 
   // Exact world coordinate of any component pin considering rotation (0°, 90°, 180°, 270°)
   getPinWorldPos(comp, pin) {
+    if (!comp || !pin) return { x: 0, y: 0 };
     const theta = ((comp.rotation || 0) * Math.PI) / 180;
     const cx = comp.x + comp.width / 2;
     const cy = comp.y + comp.height / 2;
@@ -77,8 +83,8 @@ export class SchematicRenderer {
 
     this.currentDotOffset = (this.currentDotOffset + dt * 45) % 20;
 
-    // Dark-Slate Instrument Canvas Background
-    ctx.fillStyle = '#11161d';
+    // Canvas Background
+    ctx.fillStyle = this.theme === 'light' ? '#ffffff' : '#11161d';
     ctx.fillRect(0, 0, w, h);
 
     // Transform viewport
@@ -88,9 +94,6 @@ export class SchematicRenderer {
 
     // Technical grid dots
     this.drawGrid(w, h);
-
-    // Synchronize wire paths from component net connections with Manhattan routing
-    this.syncWiresFromNets();
 
     // Draw Wires with live voltage colors & moving current charges
     this.drawWires();
@@ -131,62 +134,10 @@ export class SchematicRenderer {
     const startY = Math.floor(top / this.gridSize) * this.gridSize;
     const endY = Math.ceil(bottom / this.gridSize) * this.gridSize;
 
-    ctx.fillStyle = '#1c2533';
+    ctx.fillStyle = this.theme === 'light' ? '#cbd5e1' : '#1c2533';
     for (let x = startX; x <= endX; x += this.gridSize) {
       for (let y = startY; y <= endY; y += this.gridSize) {
-        ctx.fillRect(x - 0.8, y - 0.8, 1.6, 1.6);
-      }
-    }
-  }
-
-  /**
-   * Builds orthogonal Manhattan wire segments from net connectivity.
-   * If a segment has custom offset stored on its net, it preserves it.
-   */
-  syncWiresFromNets() {
-    const netGroups = new Map();
-    for (const comp of this.solver.components) {
-      for (let pIdx = 0; pIdx < comp.pins.length; pIdx++) {
-        const pin = comp.pins[pIdx];
-        if (pin.netId) {
-          if (!netGroups.has(pin.netId)) netGroups.set(pin.netId, []);
-          const wpos = this.getPinWorldPos(comp, pin);
-          netGroups.get(pin.netId).push({ comp, pin, pIdx, x: wpos.x, y: wpos.y });
-        }
-      }
-    }
-
-    this.wireSegments = [];
-    for (const [netId, pinList] of netGroups.entries()) {
-      if (pinList.length < 2) continue;
-
-      for (let i = 0; i < pinList.length - 1; i++) {
-        const p1 = pinList[i];
-        const p2 = pinList[i + 1];
-
-        // Manhattan trunk X calculation: snapped to grid between p1 and p2
-        let trunkX = (p1.comp.wireTrunkX && p1.comp.wireTrunkX[netId]) !== undefined 
-          ? p1.comp.wireTrunkX[netId] 
-          : this.snapToGrid((p1.x + p2.x) / 2);
-
-        if (trunkX === p1.x && p1.x !== p2.x) trunkX = p2.x;
-
-        this.wireSegments.push({
-          id: `${netId}_seg_${i}`,
-          netId,
-          x1: p1.x,
-          y1: p1.y,
-          x2: p2.x,
-          y2: p2.y,
-          trunkX,
-          v1: p1.pin.voltage ?? 0,
-          v2: p2.pin.voltage ?? 0,
-          comp1: p1.comp,
-          comp2: p2.comp,
-          pIdx1: p1.pIdx,
-          pIdx2: p2.pIdx,
-          pinCount: pinList.length
-        });
+        ctx.fillRect(x - 0.9, y - 0.9, 1.8, 1.8);
       }
     }
   }
@@ -194,66 +145,117 @@ export class SchematicRenderer {
   drawWires() {
     const ctx = this.ctx;
 
-    for (const wire of (this.wireSegments || [])) {
-      const v = (wire.v1 + wire.v2) / 2;
+    // Use explicit wires if available, or fallback to net connectivity
+    const wireList = [];
 
-      let wireColor = '#94a3b8'; // Default Slate
+    if (this.wires && this.wires.length > 0) {
+      for (const w of this.wires) {
+        const comp1 = this.solver.components.find(c => c.id === w.fromCompId);
+        const comp2 = this.solver.components.find(c => c.id === w.toCompId);
+        if (!comp1 || !comp2) continue;
+        const pin1 = comp1.pins[w.fromPinIdx];
+        const pin2 = comp2.pins[w.toPinIdx];
+        if (!pin1 || !pin2) continue;
+
+        const p1 = this.getPinWorldPos(comp1, pin1);
+        const p2 = this.getPinWorldPos(comp2, pin2);
+        wireList.push({
+          id: w.id,
+          netId: w.netId || pin1.netId,
+          x1: p1.x,
+          y1: p1.y,
+          x2: p2.x,
+          y2: p2.y,
+          v1: pin1.voltage ?? 0,
+          v2: pin2.voltage ?? 0,
+          comp1,
+          comp2
+        });
+      }
+    } else {
+      // Net-based fallback
+      const netGroups = new Map();
+      for (const comp of this.solver.components) {
+        for (let pIdx = 0; pIdx < comp.pins.length; pIdx++) {
+          const pin = comp.pins[pIdx];
+          if (pin.netId) {
+            if (!netGroups.has(pin.netId)) netGroups.set(pin.netId, []);
+            const wpos = this.getPinWorldPos(comp, pin);
+            netGroups.get(pin.netId).push({ comp, pin, pIdx, x: wpos.x, y: wpos.y });
+          }
+        }
+      }
+      for (const [netId, pinList] of netGroups.entries()) {
+        if (pinList.length < 2) continue;
+        for (let i = 0; i < pinList.length - 1; i++) {
+          const p1 = pinList[i];
+          const p2 = pinList[i + 1];
+          wireList.push({
+            id: `${netId}_${i}`,
+            netId,
+            x1: p1.x,
+            y1: p1.y,
+            x2: p2.x,
+            y2: p2.y,
+            v1: p1.pin.voltage ?? 0,
+            v2: p2.pin.voltage ?? 0,
+            comp1: p1.comp,
+            comp2: p2.comp
+          });
+        }
+      }
+    }
+
+    for (const wire of wireList) {
+      const v = (wire.v1 + wire.v2) / 2;
+      const trunkX = this.snapToGrid((wire.x1 + wire.x2) / 2);
+
+      let wireColor = this.theme === 'light' ? '#0f172a' : '#94a3b8';
       if (wire.netId === 'GND') {
-        wireColor = '#10b981'; // Lab Green
+        wireColor = this.theme === 'light' ? '#15803d' : '#10b981';
       } else if (v > 0.5) {
-        wireColor = '#f59e0b'; // High-vis Amber
+        wireColor = this.theme === 'light' ? '#dc2626' : '#f59e0b';
       } else if (v < -0.5) {
-        wireColor = '#0ea5e9'; // Cyan / Slate Blue
+        wireColor = this.theme === 'light' ? '#2563eb' : '#0ea5e9';
       }
 
       ctx.save();
       ctx.strokeStyle = wireColor;
-      ctx.lineWidth = 2.2;
+      ctx.lineWidth = 2.4;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
 
-      // 90-degree Orthogonal Manhattan Route
       ctx.beginPath();
       if (wire.x1 === wire.x2 || wire.y1 === wire.y2) {
-        // Direct orthogonal line
         ctx.moveTo(wire.x1, wire.y1);
         ctx.lineTo(wire.x2, wire.y2);
       } else {
-        // Manhattan Z-Route via trunkX
         ctx.moveTo(wire.x1, wire.y1);
-        ctx.lineTo(wire.trunkX, wire.y1);
-        ctx.lineTo(wire.trunkX, wire.y2);
+        ctx.lineTo(trunkX, wire.y1);
+        ctx.lineTo(trunkX, wire.y2);
         ctx.lineTo(wire.x2, wire.y2);
       }
       ctx.stroke();
 
-      // Solder junction dots
+      // Terminal dots
       ctx.fillStyle = wireColor;
       ctx.beginPath();
       ctx.arc(wire.x1, wire.y1, 3.5, 0, Math.PI * 2);
       ctx.arc(wire.x2, wire.y2, 3.5, 0, Math.PI * 2);
       ctx.fill();
 
-      // If more than 2 pins are on this net, draw a prominent 4.5px filled solder dot at junction
-      if (wire.pinCount >= 3) {
-        ctx.fillStyle = '#f59e0b';
-        ctx.beginPath();
-        ctx.arc(wire.trunkX, wire.y2, 4.5, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      // Animated electron current charges
+      // Electron charge flow animations
       if (this.showCurrentFlow && this.solver.isRunning) {
         const branchCurrent = Math.abs((wire.comp1?.current || wire.comp2?.current || 0));
         if (branchCurrent > 1e-4) {
           const speedFactor = Math.min(1.0, branchCurrent / 0.05);
-          ctx.fillStyle = '#facc15';
+          ctx.fillStyle = this.theme === 'light' ? '#d97706' : '#facc15';
           if (wire.x1 === wire.x2 || wire.y1 === wire.y2) {
             this.drawCurrentDotsAlongLine(ctx, wire.x1, wire.y1, wire.x2, wire.y2, speedFactor);
           } else {
-            this.drawCurrentDotsAlongLine(ctx, wire.x1, wire.y1, wire.trunkX, wire.y1, speedFactor);
-            this.drawCurrentDotsAlongLine(ctx, wire.trunkX, wire.y1, wire.trunkX, wire.y2, speedFactor);
-            this.drawCurrentDotsAlongLine(ctx, wire.trunkX, wire.y2, wire.x2, wire.y2, speedFactor);
+            this.drawCurrentDotsAlongLine(ctx, wire.x1, wire.y1, trunkX, wire.y1, speedFactor);
+            this.drawCurrentDotsAlongLine(ctx, trunkX, wire.y1, trunkX, wire.y2, speedFactor);
+            this.drawCurrentDotsAlongLine(ctx, trunkX, wire.y2, wire.x2, wire.y2, speedFactor);
           }
         }
       }
@@ -275,7 +277,7 @@ export class SchematicRenderer {
       const px = x1 + ux * pos;
       const py = y1 + uy * pos;
       ctx.beginPath();
-      ctx.arc(px, py, 2.4, 0, Math.PI * 2);
+      ctx.arc(px, py, 2.5, 0, Math.PI * 2);
       ctx.fill();
     }
   }
@@ -283,13 +285,16 @@ export class SchematicRenderer {
   drawActiveWire() {
     const ctx = this.ctx;
     const p1 = this.getPinWorldPos(this.wireStartPin.comp, this.wireStartPin.pin);
-    const p2 = this.mouseWorldPos;
+    const p2 = this.hoveredPin 
+      ? this.getPinWorldPos(this.hoveredPin.comp, this.hoveredPin.pin)
+      : this.mouseWorldPos;
+
     const trunkX = this.snapToGrid((p1.x + p2.x) / 2);
 
     ctx.save();
     ctx.setLineDash([5, 4]);
-    ctx.strokeStyle = '#0ea5e9';
-    ctx.lineWidth = 2.2;
+    ctx.strokeStyle = this.theme === 'light' ? '#0284c7' : '#00f0ff';
+    ctx.lineWidth = 2.4;
     ctx.beginPath();
     ctx.moveTo(p1.x, p1.y);
     ctx.lineTo(trunkX, p1.y);
@@ -299,7 +304,6 @@ export class SchematicRenderer {
     ctx.restore();
   }
 
-  // Draw [CH A] (Cyan) and [CH B] (Amber) badges next to probed pins on canvas
   drawProbeBadges() {
     if (!this.scopeChannels || this.scopeChannels.length === 0) return;
     const ctx = this.ctx;
@@ -308,7 +312,6 @@ export class SchematicRenderer {
       const ch = this.scopeChannels[chIdx];
       if (!ch.enabled || !ch.probePin) continue;
 
-      // Extract compId and pIdx from probePin (e.g. comp_123_p0)
       const parts = ch.probePin.split('_p');
       if (parts.length < 2) continue;
       const compId = parts[0];
@@ -319,28 +322,28 @@ export class SchematicRenderer {
 
       const pos = this.getPinWorldPos(comp, comp.pins[pIdx]);
       const badgeText = chIdx === 0 ? 'CH A' : 'CH B';
-      const badgeColor = chIdx === 0 ? '#0ea5e9' : '#f59e0b';
+      const badgeColor = chIdx === 0 ? '#00f0ff' : '#ffb700';
 
       ctx.save();
-      // Draw lead marker line
+      // Lead line
       ctx.strokeStyle = badgeColor;
       ctx.lineWidth = 1.8;
       ctx.setLineDash([2, 2]);
       ctx.beginPath();
       ctx.moveTo(pos.x, pos.y);
-      ctx.lineTo(pos.x + 18, pos.y - 20);
+      ctx.lineTo(pos.x + 18, pos.y - 18);
       ctx.stroke();
       ctx.setLineDash([]);
 
-      // Draw Badge Pill
+      // Badge Pill
       const bx = pos.x + 18;
-      const by = pos.y - 32;
-      const bw = 46;
+      const by = pos.y - 30;
+      const bw = 48;
       const bh = 18;
 
       ctx.fillStyle = '#0f172a';
       ctx.strokeStyle = badgeColor;
-      ctx.lineWidth = 1.5;
+      ctx.lineWidth = 1.8;
       ctx.beginPath();
       ctx.roundRect(bx, by, bw, bh, 4);
       ctx.fill();
@@ -350,7 +353,7 @@ export class SchematicRenderer {
       ctx.font = 'bold 10px "JetBrains Mono", monospace';
       ctx.fillText(badgeText, bx + 7, by + 13);
 
-      // Target dot at pin
+      // Solder point
       ctx.fillStyle = badgeColor;
       ctx.beginPath();
       ctx.arc(pos.x, pos.y, 4.5, 0, Math.PI * 2);
@@ -365,7 +368,6 @@ export class SchematicRenderer {
     const isSelected = this.selectedComponent?.id === comp.id;
 
     ctx.save();
-    // Center translation and 360° rotation
     const cx = comp.x + comp.width / 2;
     const cy = comp.y + comp.height / 2;
     ctx.translate(cx, cy);
@@ -376,16 +378,17 @@ export class SchematicRenderer {
     ctx.translate(-comp.width / 2, -comp.height / 2);
 
     if (isSelected) {
-      ctx.strokeStyle = '#0ea5e9';
+      ctx.strokeStyle = '#0284c7';
       ctx.lineWidth = 2.0;
       ctx.setLineDash([4, 3]);
       ctx.strokeRect(-6, -6, (comp.width || 48) + 12, (comp.height || 36) + 12);
       ctx.setLineDash([]);
     }
 
-    ctx.strokeStyle = '#e2e8f0';
-    ctx.fillStyle = '#e2e8f0';
-    ctx.lineWidth = 2.0;
+    const strokeColor = this.theme === 'light' ? '#0f172a' : '#f1f5f9';
+    ctx.strokeStyle = strokeColor;
+    ctx.fillStyle = strokeColor;
+    ctx.lineWidth = 2.2;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
 
@@ -445,13 +448,11 @@ export class SchematicRenderer {
         ctx.moveTo(16, 28);
         ctx.lineTo(16, 40);
         ctx.stroke();
-
-        ctx.lineWidth = 3;
+        ctx.lineWidth = 3.2;
         ctx.beginPath();
         ctx.moveTo(4, 12);
         ctx.lineTo(28, 12);
         ctx.stroke();
-
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(8, 28);
@@ -643,7 +644,6 @@ export class SchematicRenderer {
         ctx.moveTo(18, 32);
         ctx.lineTo(34, 44);
         ctx.stroke();
-        // NPN Emitter arrow outward
         ctx.beginPath();
         ctx.moveTo(28, 38);
         ctx.lineTo(34, 44);
@@ -666,7 +666,6 @@ export class SchematicRenderer {
         ctx.moveTo(18, 32);
         ctx.lineTo(34, 44);
         ctx.stroke();
-        // PNP Emitter arrow inward
         ctx.beginPath();
         ctx.moveTo(24, 28);
         ctx.lineTo(18, 32);
@@ -689,7 +688,6 @@ export class SchematicRenderer {
         ctx.moveTo(16, 32);
         ctx.lineTo(34, 44);
         ctx.stroke();
-        // Arrow on gate inward
         ctx.beginPath();
         ctx.moveTo(8, 28);
         ctx.lineTo(14, 32);
@@ -747,7 +745,6 @@ export class SchematicRenderer {
         ctx.moveTo(34, 6);
         ctx.lineTo(34, 26);
         ctx.stroke();
-
         // Rays
         ctx.beginPath();
         ctx.moveTo(22, 4);
@@ -833,10 +830,10 @@ export class SchematicRenderer {
 
     // Draw component pins in rotated local space
     for (const pin of comp.pins) {
-      ctx.strokeStyle = '#0ea5e9';
-      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = this.theme === 'light' ? '#0284c7' : '#00f0ff';
+      ctx.lineWidth = 1.6;
       ctx.beginPath();
-      ctx.arc(pin.x, pin.y, 2.5, 0, Math.PI * 2);
+      ctx.arc(pin.x, pin.y, 3.0, 0, Math.PI * 2);
       ctx.stroke();
     }
 
@@ -845,7 +842,7 @@ export class SchematicRenderer {
     // Draw component label upright above component in world coordinates
     ctx.save();
     ctx.font = 'bold 11px "Inter", sans-serif';
-    ctx.fillStyle = '#e2e8f0';
+    ctx.fillStyle = this.theme === 'light' ? '#0f172a' : '#e2e8f0';
     const textLabel = comp.label || comp.partNumber || comp.name;
     if (textLabel) {
       ctx.fillText(textLabel, comp.x, comp.y - 6);
@@ -853,83 +850,57 @@ export class SchematicRenderer {
     ctx.restore();
   }
 
-  // Magnetic terminal snap target ring (8px radius)
+  // Magnetic terminal snap target ring (24px detection)
   drawPinSnap(pinInfo) {
     const ctx = this.ctx;
     const wpos = this.getPinWorldPos(pinInfo.comp, pinInfo.pin);
     const pos = this.worldToScreen(wpos.x, wpos.y);
 
     ctx.save();
-    // Inner pulse ring
-    ctx.strokeStyle = '#0ea5e9';
-    ctx.lineWidth = 2.0;
+    const ringColor = this.theme === 'light' ? '#0284c7' : '#00f0ff';
+    // Glowing outer ring
+    ctx.strokeStyle = ringColor;
+    ctx.lineWidth = 2.4;
     ctx.beginPath();
-    ctx.arc(pos.x, pos.y, 8, 0, Math.PI * 2);
+    ctx.arc(pos.x, pos.y, 10, 0, Math.PI * 2);
     ctx.stroke();
 
-    // Outer target ring
-    ctx.strokeStyle = 'rgba(14, 165, 233, 0.4)';
+    // Outer target brackets
+    ctx.strokeStyle = ringColor;
     ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.arc(pos.x, pos.y, 14, 0, Math.PI * 2);
+    ctx.arc(pos.x, pos.y, 16, 0, Math.PI * 2);
     ctx.stroke();
 
     // Crosshairs
-    ctx.strokeStyle = '#0ea5e9';
     ctx.beginPath();
-    ctx.moveTo(pos.x - 14, pos.y);
-    ctx.lineTo(pos.x + 14, pos.y);
-    ctx.moveTo(pos.x, pos.y - 14);
-    ctx.lineTo(pos.x, pos.y + 14);
+    ctx.moveTo(pos.x - 16, pos.y);
+    ctx.lineTo(pos.x + 16, pos.y);
+    ctx.moveTo(pos.x, pos.y - 16);
+    ctx.lineTo(pos.x, pos.y + 16);
     ctx.stroke();
 
     ctx.restore();
   }
 
   findPinAt(wx, wy) {
-    // 8-12px snap radius for magnetic snapping
+    // Generous snap radius: 24 pixels in screen space
+    const thresholdWorld = 24 / this.zoom;
+    let closest = null;
+    let minDist = Infinity;
+
     for (const comp of this.solver.components) {
       for (let pIdx = 0; pIdx < comp.pins.length; pIdx++) {
         const pin = comp.pins[pIdx];
         const wpos = this.getPinWorldPos(comp, pin);
-        if (Math.hypot(wx - wpos.x, wy - wpos.y) <= 12) {
-          return { comp, pin, pIdx };
+        const dist = Math.hypot(wx - wpos.x, wy - wpos.y);
+        if (dist <= thresholdWorld && dist < minDist) {
+          minDist = dist;
+          closest = { comp, pin, pIdx, x: wpos.x, y: wpos.y };
         }
       }
     }
-    return null;
-  }
-
-  findWireSegmentAt(wx, wy) {
-    const threshold = 6;
-    for (const wire of (this.wireSegments || [])) {
-      if (wire.x1 === wire.x2 || wire.y1 === wire.y2) {
-        if (this.isPointNearLine(wx, wy, wire.x1, wire.y1, wire.x2, wire.y2, threshold)) {
-          return { wire, segmentType: 'direct' };
-        }
-      } else {
-        // Z-Route 3 segments: (x1, y1)->(trunkX, y1), (trunkX, y1)->(trunkX, y2), (trunkX, y2)->(x2, y2)
-        if (this.isPointNearLine(wx, wy, wire.x1, wire.y1, wire.trunkX, wire.y1, threshold)) {
-          return { wire, segmentType: 'horizontal1' };
-        }
-        if (this.isPointNearLine(wx, wy, wire.trunkX, wire.y1, wire.trunkX, wire.y2, threshold)) {
-          return { wire, segmentType: 'vertical_trunk' };
-        }
-        if (this.isPointNearLine(wx, wy, wire.trunkX, wire.y2, wire.x2, wire.y2, threshold)) {
-          return { wire, segmentType: 'horizontal2' };
-        }
-      }
-    }
-    return null;
-  }
-
-  isPointNearLine(px, py, x1, y1, x2, y2, threshold) {
-    const distSq = (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1);
-    if (distSq === 0) return Math.hypot(px - x1, py - y1) <= threshold;
-    const t = Math.max(0, Math.min(1, ((px - x1) * (x2 - x1) + (py - y1) * (y2 - y1)) / distSq));
-    const projX = x1 + t * (x2 - x1);
-    const projY = y1 + t * (y2 - y1);
-    return Math.hypot(px - projX, py - projY) <= threshold;
+    return closest;
   }
 
   findComponentAt(wx, wy) {
@@ -937,7 +908,7 @@ export class SchematicRenderer {
       const comp = this.solver.components[i];
       const cx = comp.x + comp.width / 2;
       const cy = comp.y + comp.height / 2;
-      const maxDim = Math.max(comp.width, comp.height) / 2 + 8;
+      const maxDim = Math.max(comp.width, comp.height) / 2 + 10;
       if (Math.hypot(wx - cx, wy - cy) <= maxDim) {
         return comp;
       }
@@ -989,7 +960,7 @@ export class SchematicRenderer {
     const offCtx = offCanvas.getContext('2d');
 
     offCtx.scale(2, 2);
-    offCtx.fillStyle = '#11161d';
+    offCtx.fillStyle = this.theme === 'light' ? '#ffffff' : '#11161d';
     offCtx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
     offCtx.save();

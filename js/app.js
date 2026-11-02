@@ -1,12 +1,12 @@
 /**
  * Multisim Web Studio - Academic & Professional Circuit Lab Controller
- * Unified CAD/EDA Architecture:
- * - Grouped Toolbar & Functional LocalStorage / File Save System
- * - Command Pattern Undo / Redo Execution Stacks (limit: 50)
- * - Manhattan Orthogonal Wiring & Magnetic Terminal Snapping
- * - Live CRO Oscilloscope Signal Readouts (Vpp, Vrms, Freq) & Clip Probe Badges
+ * Features:
+ * - Single File Dropdown & Simulation Controls on One Side
+ * - Big Studio Oscilloscope & Live Signal Analyzer Modal with Auto-Scale
+ * - Flawless Dual-Theme (Classic NI Multisim Light & Dark-Slate)
+ * - Rock-Solid Magnetic Terminal Snapping (Click-to-wire in any mode)
+ * - Explicit Wire Routing & Netlist Solver Integration
  * - Procedural Web Audio Laboratory Sound Engine
- * - Global EDA Keyboard Shortcuts with Form Protection
  */
 
 import { MNACircuitSolver } from './engine/mna-solver.js';
@@ -32,6 +32,7 @@ class MultisimApp {
     this.renderer = new SchematicRenderer(this.canvas, this.solver);
 
     this.scopeCanvas = document.getElementById('scopeCanvas');
+    this.bigScopeCanvas = document.getElementById('bigScopeCanvas');
     this.oscilloscope = new Oscilloscope(this.scopeCanvas, this.solver);
     this.multimeter = new DigitalMultimeter(this.solver);
 
@@ -41,38 +42,60 @@ class MultisimApp {
     this.currentMode = 'select'; // 'select', 'wire', 'probe'
     this.activeProbeChannel = 0; // 0 for CH A, 1 for CH B
     this.nextNetId = 1;
-    
+    this.wires = []; // Explicit wires: { id, fromCompId, fromPinIdx, toCompId, toPinIdx, netId }
+    this.renderer.wires = this.wires;
+
     // Interaction states
     this.isDraggingComp = false;
     this.dragStartPos = { x: 0, y: 0 };
     this.compStartPos = { x: 0, y: 0 };
-    this.isDraggingWireTrunk = false;
-    this.draggedWire = null;
     this.isPanning = false;
     this.panStart = { x: 0, y: 0 };
     this.isSpacePressed = false;
-
-    // Clipboard
     this.clipboardComponent = null;
 
+    // UI stats
     this.fpsCounter = 0;
     this.lastFpsTime = performance.now();
     this.actualFps = 60;
+    this.isBigScopeOpen = false;
 
     this.initUI();
     this.initCanvasEvents();
     this.initInstruments();
     this.resizeCanvas();
 
-    // Check for previously saved circuit in localStorage
+    // Check saved theme and circuit
+    this.initTheme();
     this.loadSavedCircuit();
 
-    // Pass oscilloscope channels to renderer for canvas probe tags
     this.renderer.scopeChannels = this.oscilloscope.channels;
-
-    // Simulation loop
     this.solver.isRunning = true;
     this.startSimulationLoop();
+  }
+
+  initTheme() {
+    const savedTheme = localStorage.getItem('multisim_studio_theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    this.renderer.setTheme(savedTheme);
+    const themeBtnText = document.getElementById('themeBtnText');
+    if (themeBtnText) {
+      themeBtnText.textContent = savedTheme === 'light' ? 'Dark Theme' : 'Light Theme';
+    }
+  }
+
+  toggleTheme() {
+    const current = document.documentElement.getAttribute('data-theme') || 'dark';
+    const nextTheme = current === 'light' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', nextTheme);
+    localStorage.setItem('multisim_studio_theme', nextTheme);
+    this.renderer.setTheme(nextTheme);
+
+    const themeBtnText = document.getElementById('themeBtnText');
+    if (themeBtnText) {
+      themeBtnText.textContent = nextTheme === 'light' ? 'Dark Theme' : 'Light Theme';
+    }
+    this.audio.playTerminalSnap();
   }
 
   resizeCanvas() {
@@ -83,7 +106,6 @@ class MultisimApp {
     this.renderer.render();
   }
 
-  // Parse engineering strings: e.g. "2.3k", "14k", "470", "28p", "10n", "0.47u", "2.2m"
   parseEngValue(input) {
     if (typeof input === 'number') return input;
     if (!input || typeof input !== 'string') return 1000;
@@ -123,35 +145,32 @@ class MultisimApp {
 
     this.renderCatalog();
 
-    // History state change hook
-    const btnUndo = document.getElementById('btnUndo');
-    const btnRedo = document.getElementById('btnRedo');
-    const saveIndicator = document.getElementById('saveStatusIndicator');
+    // 1. Single File Dropdown Menu
+    const btnFileMenu = document.getElementById('btnFileMenu');
+    const fileDropdown = document.getElementById('fileDropdown');
 
-    this.history.onStateChange = (state) => {
-      if (btnUndo) btnUndo.classList.toggle('disabled', !state.canUndo);
-      if (btnRedo) btnRedo.classList.toggle('disabled', !state.canRedo);
-      if (saveIndicator) {
-        if (state.isDirty) {
-          saveIndicator.textContent = '● Unsaved Changes';
-          saveIndicator.className = 'save-indicator dirty';
-        } else {
-          saveIndicator.textContent = '● Circuit Saved';
-          saveIndicator.className = 'save-indicator saved';
-        }
-      }
-    };
+    btnFileMenu.addEventListener('click', (e) => {
+      e.stopPropagation();
+      fileDropdown.classList.toggle('show');
+    });
 
-    // 1. File Group
+    window.addEventListener('click', () => {
+      fileDropdown.classList.remove('show');
+    });
+
     const btnNew = document.getElementById('btnNew');
     const btnOpen = document.getElementById('btnOpen');
     const fileInput = document.getElementById('fileInput');
     const btnSaveCircuit = document.getElementById('btnSaveCircuit');
     const btnSave = document.getElementById('btnSave');
+    const btnExportImage = document.getElementById('btnExportImage');
+    const btnExportNetlist = document.getElementById('btnExportNetlist');
 
     btnNew.addEventListener('click', () => {
-      if (!this.history.isDirty || confirm('Create a new blank circuit? Any unsaved changes will be cleared.')) {
+      if (confirm('Create a new blank circuit? Current canvas will be cleared.')) {
         this.solver.setComponents([]);
+        this.wires = [];
+        this.renderer.wires = this.wires;
         this.renderer.selectedComponent = null;
         this.history.clear();
         this.updateInspector(null);
@@ -169,18 +188,21 @@ class MultisimApp {
       const reader = new FileReader();
       reader.onload = (event) => {
         try {
-          const comps = JSON.parse(event.target.result);
-          if (Array.isArray(comps)) {
-            this.solver.setComponents(comps);
-            this.history.clear();
-            this.saveCircuit(false); // quietly persist to localStorage
-            this.updateProbeDropdowns();
-            this.updateInspector(null);
-            this.audio.playComponentPlacement();
-            this.renderer.render();
-          } else {
-            alert('Invalid circuit file format.');
+          const parsed = JSON.parse(event.target.result);
+          if (Array.isArray(parsed)) {
+            this.solver.setComponents(parsed);
+            this.wires = [];
+          } else if (parsed && parsed.components) {
+            this.solver.setComponents(parsed.components);
+            this.wires = parsed.wires || [];
           }
+          this.renderer.wires = this.wires;
+          this.history.clear();
+          this.saveCircuit(false);
+          this.updateProbeDropdowns();
+          this.updateInspector(null);
+          this.audio.playComponentPlacement();
+          this.renderer.render();
         } catch (err) {
           alert('Error opening circuit file: ' + err.message);
         }
@@ -189,58 +211,20 @@ class MultisimApp {
       fileInput.value = '';
     });
 
-    btnSaveCircuit.addEventListener('click', () => {
-      this.saveCircuit(true);
-    });
-
-    btnSave.addEventListener('click', () => {
-      this.downloadCircuitFile();
-    });
-
-    // 2. Export Group
-    const btnExportImage = document.getElementById('btnExportImage');
-    const btnExportNetlist = document.getElementById('btnExportNetlist');
-
+    btnSaveCircuit.addEventListener('click', () => this.saveCircuit(true));
+    btnSave.addEventListener('click', () => this.downloadCircuitFile());
     btnExportImage.addEventListener('click', () => this.renderer.exportAsImage());
     btnExportNetlist.addEventListener('click', () => this.downloadSpiceNetlist());
 
-    // 3. Simulation Controls
-    const btnRun = document.getElementById('btnRun');
-    const btnPause = document.getElementById('btnPause');
-    const btnStep = document.getElementById('btnStep');
-    const btnStop = document.getElementById('btnStop');
-
-    btnRun.addEventListener('click', () => {
-      this.solver.isRunning = true;
-      btnRun.classList.add('running');
-      document.getElementById('simStatusLight').classList.add('active');
-      document.getElementById('simStatusText').textContent = 'Simulation Running';
-      this.audio.playRelayToggle(true);
-    });
-
-    btnPause.addEventListener('click', () => {
-      this.solver.isRunning = false;
-      btnRun.classList.remove('running');
-      document.getElementById('simStatusLight').classList.remove('active');
-      document.getElementById('simStatusText').textContent = 'Simulation Paused';
-      this.audio.playRelayToggle(false);
-    });
-
-    btnStep.addEventListener('click', () => {
-      this.solver.step(this.solver.dt);
-      this.renderer.render();
-    });
-
-    btnStop.addEventListener('click', () => {
-      this.solver.reset();
-      this.renderer.render();
-      this.audio.playRelayToggle(false);
-    });
-
-    // 4. Tools Group
+    // 2. Center Tools
     const toolSelect = document.getElementById('toolSelect');
     const toolWire = document.getElementById('toolWire');
     const toolProbe = document.getElementById('toolProbe');
+    const btnRotate = document.getElementById('btnRotate');
+    const btnDelete = document.getElementById('btnDelete');
+    const btnToggleTheme = document.getElementById('btnToggleTheme');
+    const btnToggleCurrent = document.getElementById('btnToggleCurrent');
+    const btnToggleAudio = document.getElementById('btnToggleAudio');
 
     toolSelect.addEventListener('click', () => {
       this.currentMode = 'select';
@@ -265,41 +249,88 @@ class MultisimApp {
       toolWire.classList.remove('active');
     });
 
-    // 5. Edit Group
-    btnUndo.addEventListener('click', () => this.history.undo());
-    btnRedo.addEventListener('click', () => this.history.redo());
-
-    const btnRotate = document.getElementById('btnRotate');
-    const btnDelete = document.getElementById('btnDelete');
-    const btnClear = document.getElementById('btnClear');
-
     btnRotate.addEventListener('click', () => this.rotateSelected());
     btnDelete.addEventListener('click', () => this.deleteSelected());
-    btnClear.addEventListener('click', () => {
-      if (confirm('Clear entire canvas?')) {
-        this.solver.setComponents([]);
-        this.renderer.selectedComponent = null;
-        this.history.clear();
-        this.updateInspector(null);
-        this.updateProbeDropdowns();
-        this.audio.playDelete();
-        this.renderer.render();
-      }
-    });
+    btnToggleTheme.addEventListener('click', () => this.toggleTheme());
 
-    // 6. View & Audio Group
-    const btnToggleCurrent = document.getElementById('btnToggleCurrent');
     btnToggleCurrent.addEventListener('click', () => {
       this.renderer.showCurrentFlow = !this.renderer.showCurrentFlow;
       btnToggleCurrent.classList.toggle('active', this.renderer.showCurrentFlow);
     });
 
-    const btnToggleAudio = document.getElementById('btnToggleAudio');
-    const audioBtnText = document.getElementById('audioBtnText');
     btnToggleAudio.addEventListener('click', () => {
       const active = this.audio.toggle();
       btnToggleAudio.classList.toggle('active', active);
-      audioBtnText.textContent = active ? 'Audio ON' : 'Muted';
+    });
+
+    // 3. Big Live Output & Oscilloscope Modal
+    const btnOpenBigScope = document.getElementById('btnOpenBigScope');
+    const btnExpandScopeSmall = document.getElementById('btnExpandScopeSmall');
+    const bigScopeModal = document.getElementById('bigScopeModal');
+    const btnCloseBigScope = document.getElementById('btnCloseBigScope');
+    const btnBigAutoScale = document.getElementById('btnBigAutoScale');
+    const scopeAutoSet = document.getElementById('scopeAutoSet');
+
+    const openBigScope = () => {
+      this.autoProbeIfNeeded();
+      this.isBigScopeOpen = true;
+      bigScopeModal.classList.add('show');
+      this.oscilloscope.autoScale(0);
+    };
+
+    const closeBigScope = () => {
+      this.isBigScopeOpen = false;
+      bigScopeModal.classList.remove('show');
+    };
+
+    btnOpenBigScope.addEventListener('click', openBigScope);
+    if (btnExpandScopeSmall) btnExpandScopeSmall.addEventListener('click', openBigScope);
+    btnCloseBigScope.addEventListener('click', closeBigScope);
+
+    btnBigAutoScale.addEventListener('click', () => {
+      this.oscilloscope.autoScale(0);
+      this.audio.playTerminalSnap();
+    });
+
+    if (scopeAutoSet) {
+      scopeAutoSet.addEventListener('click', () => {
+        this.oscilloscope.autoScale(0);
+        this.audio.playTerminalSnap();
+      });
+    }
+
+    // 4. Simulation Controls (Grouped on Right)
+    const btnRun = document.getElementById('btnRun');
+    const btnPause = document.getElementById('btnPause');
+    const btnStep = document.getElementById('btnStep');
+    const btnStop = document.getElementById('btnStop');
+
+    btnRun.addEventListener('click', () => {
+      this.solver.isRunning = true;
+      btnRun.classList.add('running');
+      document.getElementById('simStatusLight').classList.add('active');
+      document.getElementById('simStatusText').textContent = 'Simulation Running';
+      this.autoProbeIfNeeded();
+      this.audio.playRelayToggle(true);
+    });
+
+    btnPause.addEventListener('click', () => {
+      this.solver.isRunning = false;
+      btnRun.classList.remove('running');
+      document.getElementById('simStatusLight').classList.remove('active');
+      document.getElementById('simStatusText').textContent = 'Simulation Paused';
+      this.audio.playRelayToggle(false);
+    });
+
+    btnStep.addEventListener('click', () => {
+      this.solver.step(this.solver.dt);
+      this.renderer.render();
+    });
+
+    btnStop.addEventListener('click', () => {
+      this.solver.reset();
+      this.renderer.render();
+      this.audio.playRelayToggle(false);
     });
 
     // Search filter
@@ -336,90 +367,67 @@ class MultisimApp {
       this.renderer.render();
     });
 
-    // Global EDA Keyboard Shortcuts with Form Protection
+    // Shortcuts
     window.addEventListener('keydown', (e) => {
       const activeTag = document.activeElement ? document.activeElement.tagName : '';
-      if (activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeTag === 'SELECT') {
-        return; // Protection for text inputs
-      }
+      if (activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeTag === 'SELECT') return;
 
       if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'Z')) {
         e.preventDefault();
-        if (e.shiftKey) {
-          this.history.redo();
-        } else {
-          this.history.undo();
-        }
+        if (e.shiftKey) this.history.redo();
+        else this.history.undo();
         return;
       }
-
       if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || e.key === 'Y')) {
         e.preventDefault();
         this.history.redo();
         return;
       }
-
       if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
         e.preventDefault();
         this.saveCircuit(true);
         return;
       }
-
-      if ((e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'C')) {
-        if (this.renderer.selectedComponent) {
-          e.preventDefault();
-          this.clipboardComponent = JSON.parse(JSON.stringify(this.renderer.selectedComponent));
-        }
-        return;
-      }
-
-      if ((e.ctrlKey || e.metaKey) && (e.key === 'v' || e.key === 'V')) {
-        if (this.clipboardComponent) {
-          e.preventDefault();
-          this.pasteComponent();
-        }
-        return;
-      }
-
-      if (e.key === ' ') {
-        this.isSpacePressed = true;
-      }
-
       if (e.key === 'r' || e.key === 'R') this.rotateSelected();
       if (e.key === 'Delete' || e.key === 'Backspace') this.deleteSelected();
       if (e.key === 'w' || e.key === 'W') toolWire.click();
-      if (e.key === 's' || e.key === 'S' || e.key === 'Escape') toolSelect.click();
+      if (e.key === 's' || e.key === 'S' || e.key === 'Escape') {
+        if (this.isBigScopeOpen) closeBigScope();
+        else toolSelect.click();
+      }
       if (e.key === 'p' || e.key === 'P') toolProbe.click();
       if (e.key === 'F5') { e.preventDefault(); btnRun.click(); }
       if (e.key === 'F10') { e.preventDefault(); btnStep.click(); }
     });
+  }
 
-    window.addEventListener('keyup', (e) => {
-      if (e.key === ' ') {
-        this.isSpacePressed = false;
+  // Auto-probe first active source if user hasn't probed yet
+  autoProbeIfNeeded() {
+    if (this.oscilloscope.channels[0].probePin) return;
+
+    for (const comp of this.solver.components) {
+      if (['SINE_GEN', 'DIGITAL_CLOCK', 'AC_POWER', 'DC_POWER', 'OPAMP_741', 'OPAMP_LM358'].includes(comp.type)) {
+        this.attachScopeProbe(comp, 0);
+        break;
       }
-    });
+    }
   }
 
   saveCircuit(notifyUser = true) {
     try {
-      const data = JSON.stringify(this.solver.components);
-      localStorage.setItem('multisim_studio_saved_circuit', data);
+      const circuitData = {
+        version: 2,
+        components: this.solver.components,
+        wires: this.wires
+      };
+      localStorage.setItem('multisim_studio_saved_circuit', JSON.stringify(circuitData));
       this.history.markSaved();
       this.audio.playTerminalSnap();
       if (notifyUser) {
-        const btn = document.getElementById('btnSaveCircuit');
-        const origText = btn.innerHTML;
-        btn.innerHTML = `
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-          <span style="color: #10b981;">Saved!</span>
-        `;
-        setTimeout(() => {
-          btn.innerHTML = origText;
-        }, 1500);
+        alert('Circuit configuration and wires saved successfully!');
       }
     } catch (err) {
-      alert('Error saving circuit to local storage: ' + err.message);
+      alert('Error saving circuit: ' + err.message);
     }
   }
 
@@ -427,22 +435,33 @@ class MultisimApp {
     try {
       const saved = localStorage.getItem('multisim_studio_saved_circuit');
       if (saved) {
-        const comps = JSON.parse(saved);
-        if (Array.isArray(comps) && comps.length > 0) {
-          this.solver.setComponents(comps);
-          this.history.clear();
-          this.updateProbeDropdowns();
-          return;
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          this.solver.setComponents(parsed);
+          this.wires = [];
+        } else if (parsed && parsed.components) {
+          this.solver.setComponents(parsed.components);
+          this.wires = parsed.wires || [];
         }
+        this.renderer.wires = this.wires;
+        this.history.clear();
+        this.updateProbeDropdowns();
+        return;
       }
     } catch (_) {}
     this.solver.setComponents([]);
+    this.wires = [];
+    this.renderer.wires = this.wires;
     this.history.clear();
     this.updateProbeDropdowns();
   }
 
   downloadCircuitFile() {
-    const data = JSON.stringify(this.solver.components, null, 2);
+    const data = JSON.stringify({
+      version: 2,
+      components: this.solver.components,
+      wires: this.wires
+    }, null, 2);
     const blob = new Blob([data], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -558,20 +577,6 @@ class MultisimApp {
     this.audio.playComponentPlacement();
   }
 
-  pasteComponent() {
-    if (!this.clipboardComponent) return;
-    const clone = JSON.parse(JSON.stringify(this.clipboardComponent));
-    clone.id = `comp_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
-    clone.x = this.renderer.snapToGrid(clone.x + 40);
-    clone.y = this.renderer.snapToGrid(clone.y + 40);
-    clone.pins.forEach(p => { p.netId = null; p.voltage = 0; });
-    if (clone.type === 'GROUND' || clone.type === 'DIGITAL_GROUND') {
-      clone.pins[0].netId = 'GND';
-    }
-    this.history.execute(new AddEntityCommand(this, clone));
-    this.audio.playComponentPlacement();
-  }
-
   rotateSelected() {
     const comp = this.renderer.selectedComponent;
     if (!comp) return;
@@ -584,6 +589,11 @@ class MultisimApp {
   deleteSelected() {
     const comp = this.renderer.selectedComponent;
     if (!comp) return;
+
+    // Remove connected explicit wires
+    this.wires = this.wires.filter(w => w.fromCompId !== comp.id && w.toCompId !== comp.id);
+    this.renderer.wires = this.wires;
+
     this.history.execute(new DeleteEntityCommand(this, comp));
     this.audio.playDelete();
   }
@@ -608,24 +618,22 @@ class MultisimApp {
       const sy = e.clientY - rect.top;
       const wpos = this.renderer.screenToWorld(sx, sy);
 
-      // Panning with Middle Click, Shift, or Space+Drag
+      // Panning
       if (e.button === 1 || e.shiftKey || this.isSpacePressed) {
         this.isPanning = true;
         this.panStart = { x: sx - this.renderer.panX, y: sy - this.renderer.panY };
         return;
       }
 
-      // Probe Tool
-      if (this.currentMode === 'probe') {
-        const pinInfo = this.renderer.findPinAt(wpos.x, wpos.y);
-        if (pinInfo) {
-          this.attachScopeProbe(pinInfo.comp, pinInfo.pIdx);
-          return;
-        }
+      // Check pin click for instant wiring or probe
+      const pinInfo = this.renderer.findPinAt(wpos.x, wpos.y);
+
+      if (this.currentMode === 'probe' && pinInfo) {
+        this.attachScopeProbe(pinInfo.comp, pinInfo.pIdx);
+        return;
       }
 
-      // Pin Click (Wiring mode or wiring start)
-      const pinInfo = this.renderer.findPinAt(wpos.x, wpos.y);
+      // Direct magnetic wiring from any pin in ANY mode!
       if (pinInfo) {
         if (!this.renderer.isWiring) {
           this.renderer.isWiring = true;
@@ -639,28 +647,9 @@ class MultisimApp {
         return;
       }
 
-      // Check if clicked on a wire segment for segment dragging or T-junction split
-      if (this.renderer.isWiring && this.renderer.wireStartPin) {
-        const hitSeg = this.renderer.findWireSegmentAt(wpos.x, wpos.y);
-        if (hitSeg) {
-          this.connectPinToWire(this.renderer.wireStartPin, hitSeg.wire);
-          this.renderer.isWiring = false;
-          this.renderer.wireStartPin = null;
-          return;
-        }
-      }
-
       if (this.renderer.isWiring) {
         this.renderer.isWiring = false;
         this.renderer.wireStartPin = null;
-        return;
-      }
-
-      // Check for wire trunk dragging
-      const wireHit = this.renderer.findWireSegmentAt(wpos.x, wpos.y);
-      if (wireHit && wireHit.segmentType === 'vertical_trunk') {
-        this.isDraggingWireTrunk = true;
-        this.draggedWire = wireHit.wire;
         return;
       }
 
@@ -671,13 +660,11 @@ class MultisimApp {
           comp.isOpen = !comp.isOpen;
           this.audio.playRelayToggle(true);
         }
-
         if (comp.type === 'POTENTIOMETER' || comp.type === 'LDR') {
           const frac = Math.max(0.01, Math.min(0.99, (wpos.x - comp.x) / comp.width));
           if (comp.type === 'POTENTIOMETER') comp.sliderValue = frac;
           if (comp.type === 'LDR') comp.lux = Math.round(frac * 1000);
         }
-
         this.renderer.selectedComponent = comp;
         this.updateInspector(comp);
         this.isDraggingComp = true;
@@ -704,15 +691,6 @@ class MultisimApp {
         return;
       }
 
-      if (this.isDraggingWireTrunk && this.draggedWire) {
-        const netId = this.draggedWire.netId;
-        const newTrunkX = this.renderer.snapToGrid(wpos.x);
-        if (!this.draggedWire.comp1.wireTrunkX) this.draggedWire.comp1.wireTrunkX = {};
-        this.draggedWire.comp1.wireTrunkX[netId] = newTrunkX;
-        this.renderer.render();
-        return;
-      }
-
       if (this.isDraggingComp && this.renderer.selectedComponent) {
         const comp = this.renderer.selectedComponent;
         const dx = wpos.x - this.dragStartPos.x;
@@ -722,6 +700,7 @@ class MultisimApp {
         return;
       }
 
+      // Magnetic hovered pin
       this.renderer.hoveredPin = this.renderer.findPinAt(wpos.x, wpos.y);
     });
 
@@ -733,22 +712,17 @@ class MultisimApp {
         }
       }
       this.isDraggingComp = false;
-      this.isDraggingWireTrunk = false;
-      this.draggedWire = null;
       this.isPanning = false;
     });
 
-    // Smooth zooming centered on mouse pointer
     canvas.addEventListener('wheel', (e) => {
       e.preventDefault();
       const rect = canvas.getBoundingClientRect();
       const sx = e.clientX - rect.left;
       const sy = e.clientY - rect.top;
-
       const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
       const newZoom = Math.max(0.4, Math.min(2.5, this.renderer.zoom * zoomFactor));
 
-      // Adjust pan to center zoom on pointer
       this.renderer.panX = sx - (sx - this.renderer.panX) * (newZoom / this.renderer.zoom);
       this.renderer.panY = sy - (sy - this.renderer.panY) * (newZoom / this.renderer.zoom);
       this.renderer.zoom = newZoom;
@@ -758,7 +732,7 @@ class MultisimApp {
 
   promptEditValue(comp) {
     if (comp.resistance !== undefined) {
-      const valStr = prompt(`Enter Resistor value for ${comp.label || comp.partNumber} (e.g. 470, 1k, 1.1k, 2.3k, 14k, 82k, 100k, 470k):`, this.formatEngValue(comp.resistance, 'Ω'));
+      const valStr = prompt(`Resistor value for ${comp.label || comp.partNumber}:`, this.formatEngValue(comp.resistance, 'Ω'));
       if (valStr) {
         const oldR = comp.resistance;
         const newR = this.parseEngValue(valStr);
@@ -766,7 +740,7 @@ class MultisimApp {
         comp.label = this.formatEngValue(newR, 'Ω');
       }
     } else if (comp.capacitance !== undefined) {
-      const valStr = prompt(`Enter Capacitor value for ${comp.label || comp.partNumber} (e.g. 10p, 28p, 720p, 1n, 10n, 0.1u, 1u, 10u, 47u):`, this.formatEngValue(comp.capacitance, 'F'));
+      const valStr = prompt(`Capacitor value for ${comp.label || comp.partNumber}:`, this.formatEngValue(comp.capacitance, 'F'));
       if (valStr) {
         const oldC = comp.capacitance;
         const newC = this.parseEngValue(valStr);
@@ -774,7 +748,7 @@ class MultisimApp {
         comp.label = this.formatEngValue(newC, 'F');
       }
     } else if (comp.inductance !== undefined) {
-      const valStr = prompt(`Enter Inductor value (e.g. 1m, 2.2m, 10m):`, this.formatEngValue(comp.inductance, 'H'));
+      const valStr = prompt(`Inductor value:`, this.formatEngValue(comp.inductance, 'H'));
       if (valStr) {
         const oldL = comp.inductance;
         const newL = this.parseEngValue(valStr);
@@ -782,7 +756,7 @@ class MultisimApp {
         comp.label = this.formatEngValue(newL, 'H');
       }
     } else if (comp.voltage !== undefined) {
-      const valStr = prompt(`Enter Voltage value for ${comp.label || comp.partNumber} (e.g. 5V, 9V, 12V):`, comp.voltage + ' V');
+      const valStr = prompt(`Voltage value for ${comp.label || comp.partNumber}:`, comp.voltage + ' V');
       if (valStr) {
         const oldV = comp.voltage;
         const newV = parseFloat(valStr) || 5;
@@ -807,7 +781,6 @@ class MultisimApp {
     }
 
     this.audio.playTerminalSnap();
-    document.querySelector('.tab-btn[data-tab="oscilloscope"]')?.click();
     this.renderer.render();
   }
 
@@ -820,17 +793,34 @@ class MultisimApp {
       targetNet = `NET_${this.nextNetId++}`;
     }
 
-    const oldNet1 = pinInfo1.pin.netId;
-    const oldNet2 = pinInfo2.pin.netId;
+    // Merge nets across all components if pins had different existing nets
+    const netToReplace = pinInfo2.pin.netId;
+    if (netToReplace && netToReplace !== targetNet) {
+      for (const comp of this.solver.components) {
+        for (const pin of comp.pins) {
+          if (pin.netId === netToReplace) pin.netId = targetNet;
+        }
+      }
+      for (const w of this.wires) {
+        if (w.netId === netToReplace) w.netId = targetNet;
+      }
+    }
 
-    this.history.execute(new AddWireCommand(this, pinInfo1, pinInfo2, targetNet, oldNet1, oldNet2));
-    this.audio.playTerminalSnap();
-  }
+    pinInfo1.pin.netId = targetNet;
+    pinInfo2.pin.netId = targetNet;
 
-  connectPinToWire(pinInfo, wire) {
-    if (!pinInfo || !wire || !wire.netId) return;
-    const oldNet = pinInfo.pin.netId;
-    pinInfo.pin.netId = wire.netId;
+    // Create explicit wire
+    const wire = {
+      id: `w_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+      fromCompId: pinInfo1.comp.id,
+      fromPinIdx: pinInfo1.pIdx,
+      toCompId: pinInfo2.comp.id,
+      toPinIdx: pinInfo2.pIdx,
+      netId: targetNet
+    };
+    this.wires.push(wire);
+    this.renderer.wires = this.wires;
+
     this.updateProbeDropdowns();
     this.audio.playTerminalSnap();
     this.renderer.render();
@@ -937,20 +927,11 @@ class MultisimApp {
     document.getElementById('scopeTimebase').addEventListener('change', (e) => {
       this.oscilloscope.timePerDiv = parseFloat(e.target.value);
     });
-    document.getElementById('scopeCursors').addEventListener('change', (e) => {
-      this.oscilloscope.showCursors = e.target.checked;
-    });
     document.getElementById('scopeVoltsChA').addEventListener('change', (e) => {
       this.oscilloscope.channels[0].voltsPerDiv = parseFloat(e.target.value);
     });
     document.getElementById('scopeVoltsChB').addEventListener('change', (e) => {
       this.oscilloscope.channels[1].voltsPerDiv = parseFloat(e.target.value);
-    });
-    document.getElementById('scopeTrigSource').addEventListener('change', (e) => {
-      this.oscilloscope.triggerSource = e.target.value;
-    });
-    document.getElementById('scopeTrigSlope').addEventListener('change', (e) => {
-      this.oscilloscope.triggerSlope = e.target.value;
     });
     document.getElementById('scopeProbeChA').addEventListener('change', (e) => {
       const parts = e.target.value.split(':');
@@ -994,22 +975,37 @@ class MultisimApp {
       }
 
       this.renderer.render();
-      this.oscilloscope.render();
+      this.oscilloscope.render(this.scopeCanvas);
+
+      if (this.isBigScopeOpen && this.bigScopeCanvas) {
+        this.oscilloscope.render(this.bigScopeCanvas);
+      }
+
       this.multimeter.update();
 
-      // Update Oscilloscope live metrics readout
+      // Live metrics readout
       const chAMetrics = this.oscilloscope.getMetrics(0);
       const chBMetrics = this.oscilloscope.getMetrics(1);
 
       const elChAVpp = document.getElementById('metricChAVpp');
       const elChAFreq = document.getElementById('metricChAFreq');
       if (elChAVpp) elChAVpp.textContent = `Vpp: ${chAMetrics.vpp.toFixed(2)} V`;
-      if (elChAFreq) elChAFreq.textContent = `Freq: ${chAMetrics.freq >= 1000 ? (chAMetrics.freq / 1000).toFixed(2) + ' kHz' : chAMetrics.freq.toFixed(1) + ' Hz'} | RMS: ${chAMetrics.vRms.toFixed(2)} V`;
+      if (elChAFreq) elChAFreq.textContent = `Freq: ${chAMetrics.freq >= 1000 ? (chAMetrics.freq / 1000).toFixed(2) + ' kHz' : chAMetrics.freq.toFixed(1) + ' Hz'}`;
 
       const elChBVpp = document.getElementById('metricChBVpp');
       const elChBFreq = document.getElementById('metricChBFreq');
       if (elChBVpp) elChBVpp.textContent = `Vpp: ${chBMetrics.vpp.toFixed(2)} V`;
-      if (elChBFreq) elChBFreq.textContent = `Freq: ${chBMetrics.freq >= 1000 ? (chBMetrics.freq / 1000).toFixed(2) + ' kHz' : chBMetrics.freq.toFixed(1) + ' Hz'} | RMS: ${chBMetrics.vRms.toFixed(2)} V`;
+      if (elChBFreq) elChBFreq.textContent = `Freq: ${chBMetrics.freq >= 1000 ? (chBMetrics.freq / 1000).toFixed(2) + ' kHz' : chBMetrics.freq.toFixed(1) + ' Hz'}`;
+
+      // Big Modal Stats
+      const bigStatChA = document.getElementById('bigStatChA');
+      const bigStatChB = document.getElementById('bigStatChB');
+      if (bigStatChA) {
+        bigStatChA.textContent = `CH A: Vpp = ${chAMetrics.vpp.toFixed(2)}V | Freq = ${chAMetrics.freq >= 1000 ? (chAMetrics.freq / 1000).toFixed(2) + ' kHz' : chAMetrics.freq.toFixed(1) + ' Hz'} | RMS = ${chAMetrics.vRms.toFixed(2)}V`;
+      }
+      if (bigStatChB) {
+        bigStatChB.textContent = `CH B: Vpp = ${chBMetrics.vpp.toFixed(2)}V | Freq = ${chBMetrics.freq >= 1000 ? (chBMetrics.freq / 1000).toFixed(2) + ' kHz' : chBMetrics.freq.toFixed(1) + ' Hz'} | RMS = ${chBMetrics.vRms.toFixed(2)}V`;
+      }
 
       const dmmEl = document.getElementById('dmmDisplay');
       if (dmmEl) dmmEl.textContent = this.multimeter.displayValue;

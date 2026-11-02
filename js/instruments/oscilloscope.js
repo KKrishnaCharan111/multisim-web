@@ -1,18 +1,19 @@
 /**
  * Multisim Web Studio - 4-Channel Digital Storage Oscilloscope (Agilent/Tektronix Style)
- * High-speed waveform rendering, Volts/Div, Timebase, Triggering, and Live Signal Metrics (Vpp, Vrms, Freq).
+ * High-speed waveform rendering, Volts/Div, Timebase, Triggering, Auto-Scaling,
+ * and Live Signal Metrics (Vpp, Vrms, Freq, Vmax, Vmin).
  */
 
 export class Oscilloscope {
   constructor(canvas, solver) {
     this.canvas = canvas;
-    this.ctx = canvas.getContext('2d');
+    this.ctx = canvas ? canvas.getContext('2d') : null;
     this.solver = solver;
 
     // Channels
     this.channels = [
-      { id: 'chA', label: 'CH A', color: '#0ea5e9', enabled: true, voltsPerDiv: 2.0, yOffset: 0, probePin: null, vMin: 0, vMax: 0, vpp: 0, vRms: 0, freq: 0 },
-      { id: 'chB', label: 'CH B', color: '#f59e0b', enabled: true, voltsPerDiv: 2.0, yOffset: 0, probePin: null, vMin: 0, vMax: 0, vpp: 0, vRms: 0, freq: 0 }
+      { id: 'chA', label: 'CH A', color: '#00f0ff', enabled: true, voltsPerDiv: 2.0, yOffset: 0, probePin: null, vMin: 0, vMax: 0, vpp: 0, vRms: 0, freq: 0 },
+      { id: 'chB', label: 'CH B', color: '#ffb700', enabled: true, voltsPerDiv: 2.0, yOffset: 0, probePin: null, vMin: 0, vMax: 0, vpp: 0, vRms: 0, freq: 0 }
     ];
 
     // Timebase: seconds per division
@@ -44,20 +45,52 @@ export class Oscilloscope {
   }
 
   getMetrics(chIndex) {
-    return this.channels[chIndex] || { vpp: 0, vRms: 0, freq: 0 };
+    return this.channels[chIndex] || { vpp: 0, vRms: 0, freq: 0, vMax: 0, vMin: 0 };
   }
 
-  render() {
-    const ctx = this.ctx;
-    const w = this.canvas.width;
-    const h = this.canvas.height;
+  /**
+   * Magic Auto-Scale: Automatically adjusts Volts/Div and Timebase
+   * so the waveform fits on screen with 2-3 full periods!
+   */
+  autoScale(chIndex = 0) {
+    const ch = this.channels[chIndex];
+    if (!ch || !ch.probePin) return;
 
-    // Instrument CRT background
-    ctx.fillStyle = '#0a1017';
+    const history = this.solver.probeHistories.get(ch.probePin);
+    if (!history || history.length < 5) return;
+
+    // 1. Scale Volts/Div to fit amplitude
+    const vpp = ch.vpp || 1.0;
+    const targetVPerDiv = Math.max(0.05, vpp / 4.5);
+    const standardVolts = [0.05, 0.1, 0.2, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0];
+    ch.voltsPerDiv = standardVolts.reduce((prev, curr) =>
+      Math.abs(curr - targetVPerDiv) < Math.abs(prev - targetVPerDiv) ? curr : prev
+    );
+
+    // 2. Scale Timebase to show ~2 to 3 cycles
+    if (ch.freq > 0) {
+      const period = 1 / ch.freq;
+      const targetTimePerDiv = (period * 2.5) / 10;
+      const standardTimes = [0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5];
+      this.timePerDiv = standardTimes.reduce((prev, curr) =>
+        Math.abs(curr - targetTimePerDiv) < Math.abs(prev - targetTimePerDiv) ? curr : prev
+      );
+    }
+  }
+
+  render(targetCanvas = null) {
+    const canvas = targetCanvas || this.canvas;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width;
+    const h = canvas.height;
+
+    // High-tech Phosphor CRT background
+    ctx.fillStyle = '#080e15';
     ctx.fillRect(0, 0, w, h);
 
     // CRT graticule grid
-    ctx.strokeStyle = '#1e293b';
+    ctx.strokeStyle = '#182433';
     ctx.lineWidth = 1;
     const dx = w / this.numDivsX;
     const dy = h / this.numDivsY;
@@ -74,7 +107,7 @@ export class Oscilloscope {
     ctx.stroke();
 
     // Center crosshairs with subdivision ticks
-    ctx.strokeStyle = '#334155';
+    ctx.strokeStyle = '#27384d';
     ctx.beginPath();
     ctx.moveTo(w / 2, 0);
     ctx.lineTo(w / 2, h);
@@ -83,7 +116,7 @@ export class Oscilloscope {
     ctx.stroke();
 
     // Subdivision tick marks
-    ctx.fillStyle = '#475569';
+    ctx.fillStyle = '#3e526a';
     for (let i = 0; i <= this.numDivsX * 5; i++) {
       const x = (i * w) / (this.numDivsX * 5);
       ctx.fillRect(x - 0.5, h / 2 - 3, 1, 6);
@@ -93,13 +126,13 @@ export class Oscilloscope {
       ctx.fillRect(w / 2 - 3, y - 0.5, 6, 1);
     }
 
-    // Trigger level dashed marker
+    // Trigger level dashed line
     if (this.triggerMode !== 'none') {
       const trigCh = this.channels.find(c => c.id === this.triggerSource) || this.channels[0];
       const trigY = h / 2 - (this.triggerLevel / trigCh.voltsPerDiv) * dy - trigCh.yOffset * dy;
       ctx.save();
       ctx.setLineDash([4, 4]);
-      ctx.strokeStyle = 'rgba(245, 158, 11, 0.4)';
+      ctx.strokeStyle = 'rgba(255, 183, 0, 0.4)';
       ctx.beginPath();
       ctx.moveTo(0, trigY);
       ctx.lineTo(w, trigY);
@@ -137,12 +170,14 @@ export class Oscilloscope {
       const tStart = tRef - totalTimeWindow / 2;
       const tEnd = tRef + totalTimeWindow / 2;
 
-      // Trace line with phosphor bloom
+      // Trace line with vibrant phosphor bloom
       ctx.save();
       ctx.shadowColor = ch.color;
-      ctx.shadowBlur = 6;
+      ctx.shadowBlur = 8;
       ctx.strokeStyle = ch.color;
-      ctx.lineWidth = 2.2;
+      ctx.lineWidth = 2.5;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
       ctx.beginPath();
 
       let hasStarted = false;
@@ -181,13 +216,13 @@ export class Oscilloscope {
       ctx.stroke();
       ctx.restore();
 
-      // Store stats
+      // Store calculated stats
       ch.vMin = vMin === Infinity ? 0 : vMin;
       ch.vMax = vMax === -Infinity ? 0 : vMax;
       ch.vpp = Math.max(0, ch.vMax - ch.vMin);
       ch.vRms = count > 0 ? Math.sqrt(sumSq / count) : 0;
 
-      // Calculate frequency
+      // Calculate frequency from zero crossings
       if (zeroCrossings.length >= 3) {
         const halfPeriods = [];
         for (let k = 1; k < zeroCrossings.length; k++) {

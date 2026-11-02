@@ -1,10 +1,10 @@
 /* ==========================================================================
    Multisim Web Studio - Professional CAD/EDA Engineering Environment
-   Theme: Instrument Dark-Slate / Industrial Lab Aesthetic (2026 Edition)
+   Dual Theme System: Modern Dark-Slate & Classic NI Multisim Light Theme
    ========================================================================== */
 
 :root {
-  /* Instrument Dark-Slate Palette */
+  /* Instrument Dark-Slate Palette (Default) */
   --bg-app: #0e131a;
   --bg-ribbon: #161d27;
   --bg-sidebar: #131a23;
@@ -32,6 +32,31 @@
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Consolas, monospace;
 }
 
+[data-theme="light"] {
+  /* Classic NI Multisim Pure Light Lab Palette */
+  --bg-app: #f1f5f9;
+  --bg-ribbon: #ffffff;
+  --bg-sidebar: #f8fafc;
+  --bg-canvas: #ffffff;
+  --bg-surface: #ffffff;
+  --bg-surface-hover: #f1f5f9;
+  --bg-active: #0284c715;
+
+  --border-ui: #cbd5e1;
+  --border-subtle: #e2e8f0;
+  --border-focus: #0284c7;
+
+  --text-main: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+
+  --accent-cyan: #0284c7;
+  --accent-amber: #d97706;
+  --accent-green: #15803d;
+  --accent-red: #dc2626;
+  --accent-blue: #2563eb;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -54,33 +79,34 @@ body {
   background-color: var(--bg-ribbon);
   border-bottom: 1px solid var(--border-ui);
   display: flex;
-  flex-direction: column;
-  z-index: 20;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-}
-
-.brand-bar {
-  display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 5px 14px;
-  background-color: #0d1219;
-  border-bottom: 1px solid var(--border-subtle);
+  padding: 0 12px;
+  height: 44px;
+  z-index: 50;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+}
+
+.brand-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
 }
 
 .brand-logo {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
   font-weight: 700;
   font-size: 13px;
   letter-spacing: 0.8px;
-  color: #f1f5f9;
+  color: var(--text-main);
 }
 
 .brand-badge {
   background: rgba(14, 165, 233, 0.15);
-  color: #38bdf8;
+  color: var(--accent-cyan);
   font-size: 10px;
   padding: 2px 6px;
   border-radius: 4px;
@@ -88,77 +114,88 @@ body {
   border: 1px solid rgba(14, 165, 233, 0.3);
 }
 
-.brand-meta {
+/* Dropdown Menu Architecture */
+.dropdown-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-ui);
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  min-width: 210px;
+  z-index: 100;
+  padding: 4px;
+}
+
+.dropdown-menu.show {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dropdown-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  font-size: 11px;
+  justify-content: space-between;
+  padding: 7px 10px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  transition: all 0.15s ease;
 }
 
-.save-indicator {
-  display: inline-flex;
+.dropdown-item-left {
+  display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-weight: 500;
-  font-size: 11px;
-  transition: all 0.2s ease;
+  gap: 8px;
 }
 
-.save-indicator.saved {
-  background: rgba(16, 185, 129, 0.12);
-  color: #10b981;
-  border: 1px solid rgba(16, 185, 129, 0.25);
-}
-
-.save-indicator.dirty {
-  background: rgba(245, 158, 11, 0.15);
-  color: #f59e0b;
-  border: 1px solid rgba(245, 158, 11, 0.3);
-}
-
-.engine-badge {
-  color: var(--text-muted);
+.dropdown-item-key {
   font-family: var(--font-mono);
   font-size: 10px;
+  color: var(--text-muted);
 }
 
-/* Ribbon Controls Container */
-.ribbon-controls {
-  display: flex;
-  align-items: center;
-  padding: 5px 12px;
-  gap: 6px;
-  background-color: var(--bg-ribbon);
-  overflow-x: auto;
-  scrollbar-width: none;
+.dropdown-item:hover {
+  background-color: var(--bg-surface-hover);
+  color: var(--text-main);
 }
 
-.ribbon-controls::-webkit-scrollbar {
-  display: none;
-}
-
-.ribbon-group {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  position: relative;
-}
-
-.ribbon-separator {
-  width: 1px;
-  height: 24px;
+.dropdown-divider {
+  height: 1px;
   background-color: var(--border-ui);
-  margin: 0 4px;
+  margin: 3px 0;
+}
+
+/* Ribbon Center & Right Groups */
+.ribbon-center {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  justify-content: center;
+}
+
+.ribbon-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   flex-shrink: 0;
 }
 
-.group-label {
-  display: none; /* Accessible attribute */
-}
-
-/* Ribbon Buttons */
+/* Standard Ribbon Button */
 .ribbon-btn {
   display: inline-flex;
   align-items: center;
@@ -179,73 +216,79 @@ body {
   flex-shrink: 0;
 }
 
-.ribbon-btn:hover:not(.disabled) {
+.ribbon-btn:hover {
   background-color: var(--bg-surface-hover);
   color: var(--text-main);
   border-color: #3b4b63;
 }
 
-.ribbon-btn:active:not(.disabled) {
+.ribbon-btn:active {
   transform: translateY(1px);
 }
 
-.ribbon-btn.icon-btn {
-  padding: 0 8px;
-}
-
-.ribbon-btn.disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
-  pointer-events: none;
-}
-
-/* Active Tool highlight */
 .ribbon-btn.active {
   background-color: rgba(14, 165, 233, 0.18);
   border-color: var(--accent-cyan);
-  color: #38bdf8;
+  color: var(--accent-cyan);
   box-shadow: 0 0 8px rgba(14, 165, 233, 0.25);
 }
 
+/* Big Live Output Button Highlight */
+.ribbon-btn.btn-big-output {
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.25), rgba(16, 185, 129, 0.2));
+  border-color: var(--accent-cyan);
+  color: #38bdf8;
+  font-weight: 600;
+  box-shadow: 0 0 10px rgba(14, 165, 233, 0.3);
+}
+
+[data-theme="light"] .ribbon-btn.btn-big-output {
+  background: linear-gradient(135deg, rgba(2, 132, 199, 0.15), rgba(21, 128, 61, 0.15));
+  border-color: var(--accent-cyan);
+  color: #0284c7;
+}
+
+.ribbon-btn.btn-big-output:hover {
+  box-shadow: 0 0 14px rgba(14, 165, 233, 0.5);
+  transform: scale(1.02);
+}
+
 /* Simulation Controls */
-.ribbon-btn.sim-run {
-  background-color: rgba(16, 185, 129, 0.15);
-  border-color: rgba(16, 185, 129, 0.4);
+.sim-group {
+  display: flex;
+  align-items: center;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-ui);
+  border-radius: 6px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.sim-group .ribbon-btn {
+  border: none;
+  background: transparent;
+  height: 28px;
+  padding: 0 8px;
+}
+
+.sim-group .ribbon-btn.sim-run {
   color: #34d399;
 }
 
-.ribbon-btn.sim-run:hover {
-  background-color: rgba(16, 185, 129, 0.25);
-  border-color: var(--accent-green);
-  color: #ffffff;
-}
-
-.ribbon-btn.sim-run.running {
+.sim-group .ribbon-btn.sim-run.running {
   background-color: var(--accent-green);
-  border-color: var(--accent-green);
   color: #ffffff;
-  box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+  border-radius: 4px;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
 }
 
-.ribbon-btn.sim-stop {
-  color: #f87171;
+.sim-group .ribbon-btn.sim-stop {
+  color: var(--accent-red);
 }
 
-.ribbon-btn.sim-stop:hover {
-  background-color: rgba(239, 68, 68, 0.2);
-  border-color: var(--accent-red);
-  color: #ffffff;
-}
-
-/* Functional Save Button */
-.ribbon-btn.btn-save {
-  border-color: rgba(14, 165, 233, 0.4);
-  color: #38bdf8;
-}
-
-.ribbon-btn.btn-save:hover {
-  background-color: rgba(14, 165, 233, 0.2);
-  border-color: var(--accent-cyan);
+.sim-group .ribbon-btn:hover {
+  background-color: var(--bg-surface-hover);
+  border-radius: 4px;
 }
 
 /* ================= Workspace Layout ================= */
@@ -268,13 +311,13 @@ body {
 }
 
 .sidebar-header {
-  padding: 9px 12px;
+  padding: 8px 12px;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.8px;
   color: var(--text-muted);
   border-bottom: 1px solid var(--border-ui);
-  background-color: #0f151d;
+  background-color: var(--bg-surface);
 }
 
 .sidebar-search-box {
@@ -292,12 +335,10 @@ body {
   font-size: 12px;
   outline: none;
   font-family: var(--font-main);
-  transition: border-color 0.15s ease;
 }
 
 .search-input:focus {
   border-color: var(--accent-cyan);
-  box-shadow: 0 0 6px rgba(14, 165, 233, 0.2);
 }
 
 .category-tabs {
@@ -307,15 +348,15 @@ body {
 }
 
 .category-group-header {
-  padding: 8px 10px;
+  padding: 7px 10px;
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
   color: var(--text-secondary);
-  background-color: #161e2a;
+  background-color: var(--bg-surface);
   border: 1px solid var(--border-ui);
   border-radius: 4px;
-  margin-top: 6px;
+  margin-top: 5px;
   cursor: pointer;
   display: flex;
   justify-content: space-between;
@@ -338,7 +379,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 6px 10px;
+  padding: 5px 8px;
   background-color: transparent;
   border: 1px solid transparent;
   border-radius: 4px;
@@ -352,7 +393,7 @@ body {
 .catalog-item-btn:hover {
   background-color: var(--bg-surface);
   border-color: var(--border-ui);
-  color: #38bdf8;
+  color: var(--accent-cyan);
 }
 
 .catalog-item-part {
@@ -382,12 +423,11 @@ body {
   right: 16px;
   display: flex;
   gap: 6px;
-  background-color: rgba(22, 29, 39, 0.85);
-  backdrop-filter: blur(8px);
+  background-color: var(--bg-surface);
   padding: 4px;
   border-radius: 6px;
   border: 1px solid var(--border-ui);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
 .float-btn {
@@ -396,12 +436,11 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: var(--bg-surface);
+  background-color: var(--bg-app);
   border: 1px solid var(--border-ui);
   border-radius: 4px;
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.15s ease;
 }
 
 .float-btn:hover {
@@ -424,7 +463,7 @@ body {
 .drawer-tabs {
   display: flex;
   border-bottom: 1px solid var(--border-ui);
-  background-color: #0f151d;
+  background-color: var(--bg-surface);
 }
 
 .tab-btn {
@@ -437,7 +476,6 @@ body {
   font-size: 11px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s ease;
 }
 
 .tab-btn:hover {
@@ -447,34 +485,51 @@ body {
 .tab-btn.active {
   color: var(--accent-cyan);
   border-bottom-color: var(--accent-cyan);
-  background-color: rgba(14, 165, 233, 0.08);
+  background-color: var(--bg-active);
 }
 
 .drawer-content {
   flex: 1;
   overflow-y: auto;
-  padding: 12px;
+  padding: 10px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
-/* Oscilloscope CRT & Screen */
 .scope-screen-wrapper {
-  background-color: #0a1017;
+  background-color: #080e15;
   border: 1px solid var(--border-ui);
   border-radius: 6px;
   overflow: hidden;
   display: flex;
   justify-content: center;
+  position: relative;
   box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.8);
+}
+
+.btn-expand-scope {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: rgba(14, 165, 233, 0.2);
+  border: 1px solid var(--accent-cyan);
+  color: #38bdf8;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-expand-scope:hover {
+  background: var(--accent-cyan);
+  color: #ffffff;
 }
 
 #scopeCanvas {
   display: block;
 }
 
-/* Oscilloscope Metrics Bar */
 .scope-metrics-bar {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -491,13 +546,8 @@ body {
   gap: 2px;
 }
 
-.metric-card.metric-cha {
-  border-left: 3px solid var(--accent-cyan);
-}
-
-.metric-card.metric-chb {
-  border-left: 3px solid var(--accent-amber);
-}
+.metric-card.metric-cha { border-left: 3px solid #00f0ff; }
+.metric-card.metric-chb { border-left: 3px solid #ffb700; }
 
 .metric-title {
   font-size: 10px;
@@ -505,8 +555,8 @@ body {
   text-transform: uppercase;
 }
 
-.metric-cha .metric-title { color: var(--accent-cyan); }
-.metric-chb .metric-title { color: var(--accent-amber); }
+.metric-cha .metric-title { color: #00f0ff; }
+.metric-chb .metric-title { color: #ffb700; }
 
 .metric-val {
   font-family: var(--font-mono);
@@ -521,36 +571,34 @@ body {
   color: var(--text-muted);
 }
 
-/* Scope Controls Grid */
 .scope-controls-grid {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .scope-control-card {
   background-color: var(--bg-surface);
   border: 1px solid var(--border-ui);
   border-radius: 6px;
-  padding: 10px;
+  padding: 8px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .control-label {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   color: var(--text-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
 .control-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-secondary);
 }
 
@@ -559,42 +607,36 @@ body {
   border: 1px solid var(--border-ui);
   border-radius: 4px;
   color: var(--text-main);
-  padding: 4px 8px;
+  padding: 3px 6px;
   font-size: 11px;
-  outline: none;
-  cursor: pointer;
   font-family: var(--font-mono);
-}
-
-.scope-select:focus {
-  border-color: var(--accent-cyan);
+  outline: none;
 }
 
 /* Digital Multimeter Display */
 .dmm-chassis {
-  background-color: #17202c;
-  border: 2px solid #2d3b4e;
+  background-color: var(--bg-surface);
+  border: 2px solid var(--border-ui);
   border-radius: 8px;
-  padding: 12px;
+  padding: 10px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .dmm-lcd-screen {
-  background-color: #0b1118;
-  border: 1px solid #263345;
+  background-color: #080e15;
+  border: 1px solid var(--border-ui);
   border-radius: 4px;
-  padding: 16px 12px;
+  padding: 12px 10px;
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.6);
 }
 
 .dmm-main-digits {
   font-family: var(--font-mono);
-  font-size: 26px;
+  font-size: 24px;
   font-weight: 700;
   color: #38bdf8;
   letter-spacing: 1.5px;
@@ -609,24 +651,18 @@ body {
 .dmm-mode-selector {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
+  gap: 5px;
 }
 
 .dmm-mode-btn {
-  background-color: var(--bg-surface);
+  background-color: var(--bg-app);
   border: 1px solid var(--border-ui);
   border-radius: 4px;
   color: var(--text-secondary);
-  padding: 6px;
-  font-size: 11px;
+  padding: 5px;
+  font-size: 10px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.dmm-mode-btn:hover {
-  background-color: var(--bg-surface-hover);
-  color: var(--text-main);
 }
 
 .dmm-mode-btn.active {
@@ -664,10 +700,104 @@ body {
   border-color: var(--accent-cyan);
 }
 
+/* ================= Big Output / Oscilloscope Studio Modal ================= */
+.big-scope-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(6px);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.big-scope-modal.show {
+  display: flex;
+}
+
+.big-scope-chassis {
+  background-color: #121924;
+  border: 2px solid #27374d;
+  border-radius: 10px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.7);
+  width: 960px;
+  max-width: 96vw;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.big-scope-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background-color: #0c121a;
+  border-bottom: 1px solid #27374d;
+  color: #f1f5f9;
+}
+
+.big-scope-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.8px;
+  color: #00f0ff;
+}
+
+.big-scope-screen-box {
+  background-color: #080e15;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid #27374d;
+}
+
+#bigScopeCanvas {
+  display: block;
+  border-radius: 4px;
+  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.8);
+}
+
+.big-scope-footer {
+  padding: 10px 16px;
+  background-color: #161e2b;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.big-scope-stats {
+  display: flex;
+  gap: 20px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.big-stat-cha {
+  color: #00f0ff;
+}
+
+.big-stat-chb {
+  color: #ffb700;
+}
+
+.big-scope-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 /* Bottom Status Bar */
 .multisim-statusbar {
   height: 24px;
-  background-color: #0b1016;
+  background-color: var(--bg-ribbon);
   border-top: 1px solid var(--border-ui);
   display: flex;
   align-items: center;
